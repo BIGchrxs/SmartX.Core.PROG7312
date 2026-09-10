@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SmartX.Core.PROG7312")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b3047f380c8830a3622916033a826f72cdb5a1dc")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+25ebb4a791d9f328186df0a9ce3d33eb83f98d26")]
 [assembly: System.Reflection.AssemblyProductAttribute("SmartX.Core.PROG7312")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SmartX.Core.PROG7312")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
