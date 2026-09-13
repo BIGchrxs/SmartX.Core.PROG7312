@@ -1,4 +1,4 @@
-using SmartX.Core.PROG7312.Models;
+using SmartX.Api.Models;
 
 var root = new DeviceNode("Studio HQ");
 

@@ -1,4 +1,4 @@
-namespace SmartX.Api.Models;
+namespace SmartX.Core.PROG7312.Models;
 
 public readonly struct SensorReading
 {
