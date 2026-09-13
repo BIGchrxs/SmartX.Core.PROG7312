@@ -8,4 +8,8 @@ public class SensorRegistration
     public required TelemetryValueType ValueType { get; set; }
     public DateTime RegisteredAt { get; set; } = DateTime.UtcNow;
     public List<string> MediaFiles { get; set; } = new();
+
+
+    public object? LastValue { get; set; }
+    public DateTime? LastSeenAt { get; set; }
 }

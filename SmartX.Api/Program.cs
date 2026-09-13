@@ -4,12 +4,16 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<SensorRegistry>();
+builder.Services.AddCors();
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
 var app = builder.Build();
+
+// GET /sensors — list every registered sensor (used by the dashboard's live grid)
+app.MapGet("/sensors", (SensorRegistry registry) => registry.All);
 
 // POST /sensors — register a new sensor: MAC address, zone, category, value type
 app.MapPost("/sensors", (SensorRegistration request, SensorRegistry registry) =>
@@ -41,16 +45,22 @@ app.MapPost("/telemetry", (TelemetryIngestRequest request, SensorRegistry regist
         case TelemetryValueType.Float:
             var floatPacket = new TelemetryPacket<float>(sensor.DeviceId, sensor.Zone, sensor.Category, request.Value.GetSingle());
             registry.FloatBuffer.Add(floatPacket);
+            sensor.LastValue = floatPacket.Value;
+            sensor.LastSeenAt = floatPacket.Timestamp;
             return Results.Ok(floatPacket);
 
         case TelemetryValueType.Int:
             var intPacket = new TelemetryPacket<int>(sensor.DeviceId, sensor.Zone, sensor.Category, request.Value.GetInt32());
             registry.IntBuffer.Add(intPacket);
+            sensor.LastValue = intPacket.Value;
+            sensor.LastSeenAt = intPacket.Timestamp;
             return Results.Ok(intPacket);
 
         case TelemetryValueType.Bool:
             var boolPacket = new TelemetryPacket<bool>(sensor.DeviceId, sensor.Zone, sensor.Category, request.Value.GetBoolean());
             registry.BoolBuffer.Add(boolPacket);
+            sensor.LastValue = boolPacket.Value;
+            sensor.LastSeenAt = boolPacket.Timestamp;
             return Results.Ok(boolPacket);
 
         default:
@@ -88,7 +98,7 @@ app.MapPost("/sensors/{id}/media", async (string id, HttpRequest httpRequest, Se
     var uploadsDir = Path.Combine(env.ContentRootPath, "uploads", id);
     Directory.CreateDirectory(uploadsDir);
 
-    var safeName = Path.GetFileName(file.FileName); // strips any directory traversal attempt
+    var safeName = Path.GetFileName(file.FileName);
     var destination = Path.Combine(uploadsDir, safeName);
 
     await using (var stream = File.Create(destination))
@@ -100,5 +110,7 @@ app.MapPost("/sensors/{id}/media", async (string id, HttpRequest httpRequest, Se
     return Results.Ok(new { sensor.DeviceId, file = safeName, sizeBytes = file.Length });
 });
 
+// Let the React dev server (localhost:5173) call this API directly without hitting CORS.
+app.UseCors(policy => policy.WithOrigins("http://localhost:5173").AllowAnyMethod().AllowAnyHeader());
 
 app.Run();
