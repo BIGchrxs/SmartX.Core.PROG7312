@@ -67,13 +67,19 @@ app.MapGet("/telemetry/flushed", (SensorRegistry registry) => new
 });
 
 // POST /sensors/{id}/media — attach a config file, deployment photo, or log to a sensor profile
-app.MapPost("/sensors/{id}/media", async (string id, IFormFile file, SensorRegistry registry, IWebHostEnvironment env) =>
+app.MapPost("/sensors/{id}/media", async (string id, HttpRequest httpRequest, SensorRegistry registry, IWebHostEnvironment env) =>
 {
     if (!registry.TryGet(id, out var sensor) || sensor is null)
         return Results.NotFound($"Sensor '{id}' is not registered.");
 
-    if (file.Length == 0)
-        return Results.BadRequest("Uploaded file is empty.");
+    if (!httpRequest.HasFormContentType)
+        return Results.BadRequest("Expected multipart/form-data.");
+
+    var form = await httpRequest.ReadFormAsync();
+    var file = form.Files.GetFile("file");
+
+    if (file is null || file.Length == 0)
+        return Results.BadRequest("No file provided, or the uploaded file is empty (expected form field name 'file').");
 
     const long maxFileSizeBytes = 10 * 1024 * 1024; // 10 MB
     if (file.Length > maxFileSizeBytes)
@@ -93,5 +99,6 @@ app.MapPost("/sensors/{id}/media", async (string id, IFormFile file, SensorRegis
     sensor.MediaFiles.Add(safeName);
     return Results.Ok(new { sensor.DeviceId, file = safeName, sizeBytes = file.Length });
 });
+
 
 app.Run();
