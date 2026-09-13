@@ -1,6 +1,6 @@
 namespace SmartX.Api.Models;
 
-public enum TelementryValueType
+public enum TelemetryValueType
 {
     Float,
     Int,
