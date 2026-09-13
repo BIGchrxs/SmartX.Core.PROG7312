@@ -1,6 +1,97 @@
+using SmartX.Api.Models;
+using SmartX.Api.Services;
+using System.Text.Json.Serialization;
+
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddSingleton<SensorRegistry>();
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
+
 var app = builder.Build();
 
-app.MapGet("/", () => "Hello World!");
+// POST /sensors — register a new sensor: MAC address, zone, category, value type
+app.MapPost("/sensors", (SensorRegistration request, SensorRegistry registry) =>
+{
+    if (string.IsNullOrWhiteSpace(request.DeviceId))
+        return Results.BadRequest("DeviceId is required.");
+
+    if (!DeviceNode.ValidateDeploymentPath(registry.Root, $"Studio HQ/{request.Zone}"))
+        return Results.UnprocessableEntity($"Zone '{request.Zone}' is not a registered deployment path.");
+
+    if (!registry.TryRegister(request))
+        return Results.Conflict($"Sensor '{request.DeviceId}' is already registered.");
+
+    return Results.Created($"/sensors/{request.DeviceId}", request);
+});
+
+// GET /sensors/{id} — look up a registered sensor
+app.MapGet("/sensors/{id}", (string id, SensorRegistry registry) =>
+    registry.TryGet(id, out var sensor) ? Results.Ok(sensor) : Results.NotFound());
+
+// POST /telemetry — ingest one reading for an already-registered sensor
+app.MapPost("/telemetry", (TelemetryIngestRequest request, SensorRegistry registry) =>
+{
+    if (!registry.TryGet(request.DeviceId, out var sensor) || sensor is null)
+        return Results.NotFound($"Sensor '{request.DeviceId}' is not registered.");
+
+    switch (sensor.ValueType)
+    {
+        case TelemetryValueType.Float:
+            var floatPacket = new TelemetryPacket<float>(sensor.DeviceId, sensor.Zone, sensor.Category, request.Value.GetSingle());
+            registry.FloatBuffer.Add(floatPacket);
+            return Results.Ok(floatPacket);
+
+        case TelemetryValueType.Int:
+            var intPacket = new TelemetryPacket<int>(sensor.DeviceId, sensor.Zone, sensor.Category, request.Value.GetInt32());
+            registry.IntBuffer.Add(intPacket);
+            return Results.Ok(intPacket);
+
+        case TelemetryValueType.Bool:
+            var boolPacket = new TelemetryPacket<bool>(sensor.DeviceId, sensor.Zone, sensor.Category, request.Value.GetBoolean());
+            registry.BoolBuffer.Add(boolPacket);
+            return Results.Ok(boolPacket);
+
+        default:
+            return Results.BadRequest("Unrecognised value type.");
+    }
+});
+
+// GET /telemetry/flushed — quick way to see what's made it into the List<T> collections
+app.MapGet("/telemetry/flushed", (SensorRegistry registry) => new
+{
+    floats = registry.FloatBuffer.Flushed,
+    ints = registry.IntBuffer.Flushed,
+    bools = registry.BoolBuffer.Flushed
+});
+
+// POST /sensors/{id}/media — attach a config file, deployment photo, or log to a sensor profile
+app.MapPost("/sensors/{id}/media", async (string id, IFormFile file, SensorRegistry registry, IWebHostEnvironment env) =>
+{
+    if (!registry.TryGet(id, out var sensor) || sensor is null)
+        return Results.NotFound($"Sensor '{id}' is not registered.");
+
+    if (file.Length == 0)
+        return Results.BadRequest("Uploaded file is empty.");
+
+    const long maxFileSizeBytes = 10 * 1024 * 1024; // 10 MB
+    if (file.Length > maxFileSizeBytes)
+        return Results.BadRequest("File exceeds the 10 MB limit.");
+
+    var uploadsDir = Path.Combine(env.ContentRootPath, "uploads", id);
+    Directory.CreateDirectory(uploadsDir);
+
+    var safeName = Path.GetFileName(file.FileName); // strips any directory traversal attempt
+    var destination = Path.Combine(uploadsDir, safeName);
+
+    await using (var stream = File.Create(destination))
+    {
+        await file.CopyToAsync(stream);
+    }
+
+    sensor.MediaFiles.Add(safeName);
+    return Results.Ok(new { sensor.DeviceId, file = safeName, sizeBytes = file.Length });
+});
 
 app.Run();

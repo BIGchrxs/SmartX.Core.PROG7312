@@ -1,4 +1,4 @@
-namespace SmartX.Core.PROG7312.Models;
+namespace SmartX.Api.Models;
 
 
 public class TelemetryPacket<T>
