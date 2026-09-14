@@ -1,4 +1,4 @@
-using SmartX.Core.PROG7312.Models;
+using SmartX.Api.Models;
 
 var root = new DeviceNode("Studio HQ");
 
@@ -45,3 +45,21 @@ bool coolingShouldRun = rackReading > CracThreshold;
 
 var updatedCracState = new TelemetryPacket<bool>(cracState.DeviceId, cracState.Zone, cracState.Category, coolingShouldRun);
 Console.WriteLine($"Rack inlet temp {rackTemp.Value}\u00b0C {(coolingShouldRun ? ">" : "<=")} {CracThreshold}\u00b0C threshold -> CRAC state: {updatedCracState.Value}");
+
+Console.WriteLine("\n== 5. Jagged array buffer -> optimised List<T> ==");
+var buffer = new TelemetryBuffer<float>(
+    ("Showroom Floor", 3),
+    ("Material Storage", 2),
+    ("Workshop", 4),
+    ("IT Closet", 2));
+
+buffer.Add(new TelemetryPacket<float>("SR-LUX-01", "Showroom Floor", SensorCategory.Environmental, 340.2f));
+buffer.Add(new TelemetryPacket<float>("MS-TEMP-01", "Material Storage", SensorCategory.Environmental, 18.9f));
+buffer.Add(new TelemetryPacket<float>("MS-TEMP-01", "Material Storage", SensorCategory.Environmental, 19.1f)); // fills Material Storage's row (capacity 2) -> auto-flushes
+buffer.Add(new TelemetryPacket<float>("ITC-TEMP-01", "IT Closet", SensorCategory.Environmental, rackTemp.Value));
+buffer.Add(new TelemetryPacket<float>("ITC-TEMP-01", "IT Closet", SensorCategory.Environmental, 29.0f)); // fills IT Closet's row (capacity 2) -> auto-flushes
+
+Console.WriteLine($"Readings flushed into the List<T> so far: {buffer.Flushed.Count}");
+foreach (var reading in buffer.Flushed)
+    Console.WriteLine($"  {reading}");
+Console.WriteLine("(Showroom Floor's reading is still sitting in its jagged row, waiting for 2 more before it flushes.)");

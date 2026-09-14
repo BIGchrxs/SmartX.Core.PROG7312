@@ -1,0 +1,58 @@
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\rpswa.dswa.cache.json
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\SmartX.Api.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\SmartX.Api.AssemblyInfoInputs.cache
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\SmartX.Api.AssemblyInfo.cs
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\SmartX.Api.csproj.CoreCompileInputs.cache
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\SmartX.Api.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\SmartX.Api.sourcelink.json
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\bin\Debug\net10.0\appsettings.Development.json
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\bin\Debug\net10.0\appsettings.json
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\bin\Debug\net10.0\SmartX.Api.staticwebassets.endpoints.json
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\bin\Debug\net10.0\SmartX.Api.exe
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\bin\Debug\net10.0\SmartX.Api.deps.json
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\bin\Debug\net10.0\SmartX.Api.runtimeconfig.json
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\bin\Debug\net10.0\SmartX.Api.dll
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\bin\Debug\net10.0\SmartX.Api.pdb
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\rjimswa.dswa.cache.json
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\rjsmrazor.dswa.cache.json
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\rjsmcshtml.dswa.cache.json
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\scopedcss\bundle\SmartX.Api.styles.css
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\staticwebassets.build.json
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\staticwebassets.build.json.cache
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\staticwebassets.development.json
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\staticwebassets.build.endpoints.json
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\swae.build.ex.cache
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\SmartX.Api.dll
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\refint\SmartX.Api.dll
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\SmartX.Api.pdb
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\SmartX.Api.genruntimeconfig.cache
+C:\Users\Admin\Desktop\Uni\UNI2026\Semester 2\PROG7312 3B - C#\Smart-X-\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\ref\SmartX.Api.dll
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\rpswa.dswa.cache.json
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\SmartX.Api.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\SmartX.Api.AssemblyInfoInputs.cache
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\SmartX.Api.AssemblyInfo.cs
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\SmartX.Api.csproj.CoreCompileInputs.cache
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\SmartX.Api.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\SmartX.Api.sourcelink.json
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\SmartX.Api.dll
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\refint\SmartX.Api.dll
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\SmartX.Api.pdb
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\bin\Debug\net10.0\appsettings.Development.json
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\bin\Debug\net10.0\appsettings.json
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\bin\Debug\net10.0\SmartX.Api.staticwebassets.endpoints.json
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\bin\Debug\net10.0\SmartX.Api.exe
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\bin\Debug\net10.0\SmartX.Api.deps.json
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\bin\Debug\net10.0\SmartX.Api.runtimeconfig.json
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\bin\Debug\net10.0\SmartX.Api.dll
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\bin\Debug\net10.0\SmartX.Api.pdb
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\rjimswa.dswa.cache.json
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\rjsmrazor.dswa.cache.json
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\rjsmcshtml.dswa.cache.json
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\scopedcss\bundle\SmartX.Api.styles.css
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\staticwebassets.build.json
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\staticwebassets.build.json.cache
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\staticwebassets.development.json
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\staticwebassets.build.endpoints.json
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\swae.build.ex.cache
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\SmartX.Api.genruntimeconfig.cache
+C:\Users\Admin\Desktop\SmartX-Repo\SmartX.Core.PROG7312\SmartX.Api\obj\Debug\net10.0\ref\SmartX.Api.dll
