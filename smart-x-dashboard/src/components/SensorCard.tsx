@@ -1,5 +1,6 @@
 import { useEffect, useState, type ChangeEvent } from "react";
 import type { SensorRegistration } from "../types";
+import { formatAge, formatValue, getStatus, STATUS_LABEL } from "../status";
 
 interface Props {
   sensor: SensorRegistration;
@@ -7,38 +8,12 @@ interface Props {
   onUpload: (file: File) => Promise<void>;
 }
 
-type Status = "fresh" | "stale" | "critical" | "never";
-
-const STALE_AFTER_SECONDS = 15;
-const CRITICAL_AFTER_SECONDS = 45;
-
-function getStatus(lastSeenAt: string | null | undefined): Status {
-  if (!lastSeenAt) return "never";
-  const seconds = (Date.now() - new Date(lastSeenAt).getTime()) / 1000;
-  if (seconds < STALE_AFTER_SECONDS) return "fresh";
-  if (seconds < CRITICAL_AFTER_SECONDS) return "stale";
-  return "critical";
-}
-
-function formatAge(lastSeenAt: string | null | undefined): string {
-  if (!lastSeenAt) return "No readings yet";
-  const seconds = Math.floor((Date.now() - new Date(lastSeenAt).getTime()) / 1000);
-  if (seconds < 5) return "Just now";
-  if (seconds < 60) return `${seconds}s ago`;
-  return `${Math.floor(seconds / 60)}m ago`;
-}
-
-const STATUS_LABEL: Record<Status, string> = {
-  fresh: "Live",
-  stale: "Slow to report",
-  critical: "Not reporting",
-  never: "Awaiting first reading",
-};
-
+// One live card: the latest value, how fresh it is, a manual send box and a file attach control.
 export default function SensorCard({ sensor, onSendTelemetry, onUpload }: Props) {
   const [, forceTick] = useState(0);
   const [inputValue, setInputValue] = useState("");
   const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
 
   // Re-render once a second so the age label and status colour visibly age
   // between polls, without needing a network call every second.
@@ -49,9 +24,11 @@ export default function SensorCard({ sensor, onSendTelemetry, onUpload }: Props)
 
   const status = getStatus(sensor.lastSeenAt);
 
+  // Turns the typed text into the right type and sends it. The API's complaint, if any, is shown on the card.
   async function handleSend() {
     if (!inputValue.trim()) return;
     setBusy(true);
+    setProblem(null);
     try {
       const value =
         sensor.valueType === "Bool"
@@ -61,22 +38,30 @@ export default function SensorCard({ sensor, onSendTelemetry, onUpload }: Props)
           : Number(inputValue);
       await onSendTelemetry(value);
       setInputValue("");
+    } catch (err) {
+      setProblem(err instanceof Error ? err.message : "Could not send that reading.");
     } finally {
       setBusy(false);
     }
   }
+  //-----------//
 
+  // Uploads the chosen file to this sensor's profile.
   async function handleFile(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setBusy(true);
+    setProblem(null);
     try {
       await onUpload(file);
+    } catch (err) {
+      setProblem(err instanceof Error ? err.message : "Could not upload that file.");
     } finally {
       setBusy(false);
       e.target.value = "";
     }
   }
+  //-----------//
 
   return (
     <article className={`sensor-card sensor-card--${status}`}>
@@ -90,9 +75,7 @@ export default function SensorCard({ sensor, onSendTelemetry, onUpload }: Props)
       </div>
 
       <div className="sensor-reading">
-        <span className="sensor-reading-value">
-          {sensor.lastValue === null || sensor.lastValue === undefined ? "—" : String(sensor.lastValue)}
-        </span>
+        <span className="sensor-reading-value">{formatValue(sensor.lastValue, sensor.valueType === "Bool")}</span>
         <div className="sensor-reading-meta">
           <span className={`status-label status-label--${status}`}>{STATUS_LABEL[status]}</span>
           <span className="sensor-reading-age">{formatAge(sensor.lastSeenAt)}</span>
@@ -112,6 +95,8 @@ export default function SensorCard({ sensor, onSendTelemetry, onUpload }: Props)
         </button>
       </div>
 
+      {problem && <p className="sensor-problem">{problem}</p>}
+
       <label className="upload-control">
         <span>Attach a file</span>
         <input type="file" onChange={handleFile} disabled={busy} />
@@ -125,3 +110,4 @@ export default function SensorCard({ sensor, onSendTelemetry, onUpload }: Props)
     </article>
   );
 }
+//-----------//

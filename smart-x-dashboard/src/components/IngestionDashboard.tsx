@@ -1,75 +1,52 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
-import type { SensorCategory, SensorRegistration, TelemetryValueType } from "../types";
+import { useState, type FormEvent } from "react";
+import type { SensorCategory, TelemetryValueType } from "../types";
 import { ZONES, CATEGORIES, VALUE_TYPES } from "../types";
-import { listSensors, registerSensor, sendTelemetry, uploadMedia } from "../api";
+import { registerSensor, sendTelemetry, uploadMedia } from "../api";
+import { useSmartX } from "../context/SmartXContext";
 import SensorCard from "./SensorCard";
 
-interface Props {
-  onBack: () => void;
-}
-
-const POLL_INTERVAL_MS = 4000;
-
-export default function IngestionDashboard({ onBack }: Props) {
-  const [sensors, setSensors] = useState<SensorRegistration[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+// The Part 1 page: register sensors, send readings by hand and watch the live grid.
+// The sensor list comes from the shared state, so it is already loaded when you switch to this page.
+export default function IngestionDashboard() {
+  const { sensors, loading, error, refresh, refreshSoon } = useSmartX();
 
   const [deviceId, setDeviceId] = useState("");
   const [zone, setZone] = useState<string>(ZONES[0]);
   const [category, setCategory] = useState<SensorCategory>("Environmental");
   const [valueType, setValueType] = useState<TelemetryValueType>("Float");
   const [registering, setRegistering] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
-    try {
-      const data = await listSensors();
-      setSensors(data);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not reach the API.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    refresh();
-    const interval = setInterval(refresh, POLL_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, [refresh]);
-
+  // Registers the sensor from the form, then reloads the list.
   async function handleRegister(e: FormEvent) {
     e.preventDefault();
     const trimmed = deviceId.trim();
     if (!trimmed) return;
 
     setRegistering(true);
-    setError(null);
+    setFormError(null);
     try {
       await registerSensor({ deviceId: trimmed, zone, category, valueType });
       setDeviceId("");
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not register sensor.");
+      setFormError(err instanceof Error ? err.message : "Could not register sensor.");
     } finally {
       setRegistering(false);
     }
   }
+  //-----------//
 
   return (
     <div className="dashboard">
       <header className="dashboard-header">
-        <button type="button" className="back-link" onClick={onBack}>
-          &larr; Back to gateway
-        </button>
         <h1>Sensor Data Ingestion &amp; Telemetry</h1>
         <p>
           {sensors.length} sensor{sensors.length === 1 ? "" : "s"} registered across Studio HQ
         </p>
       </header>
 
-      {error && <div className="banner banner--error">{error}</div>}
+      {(error || formError) && <div className="banner banner--error">{formError ?? error}</div>}
 
       <section className="register-panel">
         <h2>Register a sensor</h2>
@@ -114,7 +91,7 @@ export default function IngestionDashboard({ onBack }: Props) {
             </select>
           </label>
           <button type="submit" disabled={registering}>
-            {registering ? "Registering…" : "Register sensor"}
+            {registering ? "Registering..." : "Register sensor"}
           </button>
         </form>
       </section>
@@ -122,7 +99,7 @@ export default function IngestionDashboard({ onBack }: Props) {
       <section className="sensor-grid-section">
         <h2>Live sensors</h2>
         {loading ? (
-          <p className="empty-state">Loading sensors…</p>
+          <p className="empty-state">Loading sensors...</p>
         ) : sensors.length === 0 ? (
           <p className="empty-state">No sensors registered yet. Add one above to start streaming telemetry.</p>
         ) : (
@@ -133,7 +110,7 @@ export default function IngestionDashboard({ onBack }: Props) {
                 sensor={sensor}
                 onSendTelemetry={async (value) => {
                   await sendTelemetry(sensor.deviceId, value);
-                  await refresh();
+                  refreshSoon();
                 }}
                 onUpload={async (file) => {
                   await uploadMedia(sensor.deviceId, file);
@@ -147,3 +124,4 @@ export default function IngestionDashboard({ onBack }: Props) {
     </div>
   );
 }
+//-----------//
