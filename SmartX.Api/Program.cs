@@ -1,9 +1,25 @@
+using System.Text.RegularExpressions;
+using SmartX.Api.Endpoints;
 using SmartX.Api.Models;
 using SmartX.Api.Services;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// One shared instance of each service, so requests and the background workers see the same state.
 builder.Services.AddSingleton<SensorRegistry>();
+builder.Services.AddSingleton<ThresholdPolicy>();
+builder.Services.AddSingleton<IngestionQueue>();
+builder.Services.AddSingleton<TelemetryHistory>();
+builder.Services.AddSingleton<AlertTracker>();
+builder.Services.AddSingleton<CommandService>();
+builder.Services.AddSingleton<ActivityLog>();
+builder.Services.AddSingleton<InsightEngine>();
+
+// Background workers: one drains the ingestion queues, one watches for silent devices.
+builder.Services.AddHostedService<TelemetryProcessor>();
+builder.Services.AddHostedService<DisconnectMonitor>();
+
 builder.Services.AddCors();
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
@@ -12,14 +28,21 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 
 var app = builder.Build();
 
-// GET /sensors — list every registered sensor (used by the dashboard's live grid)
-app.MapGet("/sensors", (SensorRegistry registry) => registry.All);
+// Device IDs may hold letters, numbers, dashes, underscores, dots and colons (so MAC addresses work).
+var deviceIdPattern = new Regex(@"^[A-Za-z0-9._:-]{1,64}$", RegexOptions.Compiled);
 
-// POST /sensors — register a new sensor: MAC address, zone, category, value type
+// GET /sensors: list every registered sensor (used by the dashboard's live grid).
+app.MapGet("/sensors", (SensorRegistry registry) => registry.All);
+//-----------//
+
+// POST /sensors: register a new sensor with its device ID, zone, category and value type.
 app.MapPost("/sensors", (SensorRegistration request, SensorRegistry registry) =>
 {
     if (string.IsNullOrWhiteSpace(request.DeviceId))
         return Results.BadRequest("DeviceId is required.");
+
+    if (!deviceIdPattern.IsMatch(request.DeviceId) || request.DeviceId is "." or "..")
+        return Results.BadRequest("DeviceId may only contain letters, numbers, dashes, underscores, dots and colons (64 characters at most).");
 
     if (!DeviceNode.ValidateDeploymentPath(registry.Root, $"Studio HQ/{request.Zone}"))
         return Results.UnprocessableEntity($"Zone '{request.Zone}' is not a registered deployment path.");
@@ -29,54 +52,14 @@ app.MapPost("/sensors", (SensorRegistration request, SensorRegistry registry) =>
 
     return Results.Created($"/sensors/{request.DeviceId}", request);
 });
+//-----------//
 
-// GET /sensors/{id} — look up a registered sensor
+// GET /sensors/{id}: look up one registered sensor.
 app.MapGet("/sensors/{id}", (string id, SensorRegistry registry) =>
     registry.TryGet(id, out var sensor) ? Results.Ok(sensor) : Results.NotFound());
+//-----------//
 
-// POST /telemetry — ingest one reading for an already-registered sensor
-app.MapPost("/telemetry", (TelemetryIngestRequest request, SensorRegistry registry) =>
-{
-    if (!registry.TryGet(request.DeviceId, out var sensor) || sensor is null)
-        return Results.NotFound($"Sensor '{request.DeviceId}' is not registered.");
-
-    switch (sensor.ValueType)
-    {
-        case TelemetryValueType.Float:
-            var floatPacket = new TelemetryPacket<float>(sensor.DeviceId, sensor.Zone, sensor.Category, request.Value.GetSingle());
-            registry.FloatBuffer.Add(floatPacket);
-            sensor.LastValue = floatPacket.Value;
-            sensor.LastSeenAt = floatPacket.Timestamp;
-            return Results.Ok(floatPacket);
-
-        case TelemetryValueType.Int:
-            var intPacket = new TelemetryPacket<int>(sensor.DeviceId, sensor.Zone, sensor.Category, request.Value.GetInt32());
-            registry.IntBuffer.Add(intPacket);
-            sensor.LastValue = intPacket.Value;
-            sensor.LastSeenAt = intPacket.Timestamp;
-            return Results.Ok(intPacket);
-
-        case TelemetryValueType.Bool:
-            var boolPacket = new TelemetryPacket<bool>(sensor.DeviceId, sensor.Zone, sensor.Category, request.Value.GetBoolean());
-            registry.BoolBuffer.Add(boolPacket);
-            sensor.LastValue = boolPacket.Value;
-            sensor.LastSeenAt = boolPacket.Timestamp;
-            return Results.Ok(boolPacket);
-
-        default:
-            return Results.BadRequest("Unrecognised value type.");
-    }
-});
-
-// GET /telemetry/flushed — quick way to see what's made it into the List<T> collections
-app.MapGet("/telemetry/flushed", (SensorRegistry registry) => new
-{
-    floats = registry.FloatBuffer.Flushed,
-    ints = registry.IntBuffer.Flushed,
-    bools = registry.BoolBuffer.Flushed
-});
-
-// POST /sensors/{id}/media — attach a config file, deployment photo, or log to a sensor profile
+// POST /sensors/{id}/media: attach a config file, deployment photo or log to a sensor profile.
 app.MapPost("/sensors/{id}/media", async (string id, HttpRequest httpRequest, SensorRegistry registry, IWebHostEnvironment env) =>
 {
     if (!registry.TryGet(id, out var sensor) || sensor is null)
@@ -95,7 +78,9 @@ app.MapPost("/sensors/{id}/media", async (string id, HttpRequest httpRequest, Se
     if (file.Length > maxFileSizeBytes)
         return Results.BadRequest("File exceeds the 10 MB limit.");
 
-    var uploadsDir = Path.Combine(env.ContentRootPath, "uploads", id);
+    // Folder names cannot hold colons on Windows, so anything unusual becomes an underscore.
+    var folderName = new string(sensor.DeviceId.Select(c => char.IsLetterOrDigit(c) || c is '-' or '_' ? c : '_').ToArray());
+    var uploadsDir = Path.Combine(env.ContentRootPath, "uploads", folderName);
     Directory.CreateDirectory(uploadsDir);
 
     var safeName = Path.GetFileName(file.FileName);
@@ -109,6 +94,13 @@ app.MapPost("/sensors/{id}/media", async (string id, HttpRequest httpRequest, Se
     sensor.MediaFiles.Add(safeName);
     return Results.Ok(new { sensor.DeviceId, file = safeName, sizeBytes = file.Length });
 });
+//-----------//
+
+// Part 2 routes live in their own classes under Endpoints.
+app.MapTelemetryEndpoints();
+app.MapCommandEndpoints();
+app.MapAlertEndpoints();
+app.MapInsightEndpoints();
 
 // Let the React dev server (localhost:5173) call this API directly without hitting CORS.
 app.UseCors(policy => policy.WithOrigins("http://localhost:5173").AllowAnyMethod().AllowAnyHeader());
