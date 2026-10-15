@@ -4,17 +4,24 @@ namespace SmartX.Api.Services;
 
 /// <summary>
 /// In-memory registry of sensors and the Smart-X deployment hierarchy, plus the
-/// three typed jagged-array buffers that flush readings into List<T>. Registered
+/// three typed jagged-array buffers that flush readings into List&lt;T&gt;. Registered
 /// as a singleton so every request shares the same state.
+/// Devices live in a case-insensitive Dictionary, so every lookup by ID is O(1).
 /// </summary>
 public class SensorRegistry
 {
-    private readonly Dictionary<string, SensorRegistration> _sensors = new();
+    private readonly Dictionary<string, SensorRegistration> _sensors = new(StringComparer.OrdinalIgnoreCase);
+    private readonly object _lock = new();
+
     public DeviceNode Root { get; }
     public TelemetryBuffer<float> FloatBuffer { get; }
     public TelemetryBuffer<int> IntBuffer { get; }
     public TelemetryBuffer<bool> BoolBuffer { get; }
 
+    // Guards the three buffers, which are written by the worker and read by requests.
+    public object BufferLock { get; } = new();
+
+    // Builds the zone tree and the three typed buffers.
     public SensorRegistry()
     {
         Root = BuildZoneTree();
@@ -26,7 +33,9 @@ public class SensorRegistry
         BoolBuffer = new TelemetryBuffer<bool>(
             ("Showroom Floor", 3), ("Material Storage", 2), ("Workshop", 4), ("IT Closet", 2));
     }
+    //-----------//
 
+    // Builds the Studio HQ deployment tree used for recursive path validation.
     private static DeviceNode BuildZoneTree()
     {
         var root = new DeviceNode("Studio HQ");
@@ -50,11 +59,37 @@ public class SensorRegistry
 
         return root;
     }
+    //-----------//
 
-    public bool TryRegister(SensorRegistration sensor) => _sensors.TryAdd(sensor.DeviceId, sensor);
+    // Adds a sensor. Returns false if the device ID is already registered.
+    public bool TryRegister(SensorRegistration sensor)
+    {
+        lock (_lock)
+        {
+            return _sensors.TryAdd(sensor.DeviceId, sensor);
+        }
+    }
+    //-----------//
 
-    public bool TryGet(string deviceId, out SensorRegistration? sensor) =>
-        _sensors.TryGetValue(deviceId, out sensor);
+    // Looks a sensor up by device ID in constant time.
+    public bool TryGet(string deviceId, out SensorRegistration? sensor)
+    {
+        lock (_lock)
+        {
+            return _sensors.TryGetValue(deviceId, out sensor);
+        }
+    }
+    //-----------//
 
-    public IReadOnlyCollection<SensorRegistration> All => _sensors.Values;
+    // A snapshot of every registered sensor, safe to enumerate while others register.
+    public IReadOnlyList<SensorRegistration> All
+    {
+        get
+        {
+            lock (_lock)
+            {
+                return _sensors.Values.ToArray();
+            }
+        }
+    }
 }
