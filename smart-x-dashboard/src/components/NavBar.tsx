@@ -10,6 +10,7 @@ const LINKS: { route: Route; label: string }[] = [
   { route: "home", label: "Main menu" },
   { route: "ingestion", label: "Ingestion" },
   { route: "command", label: "Command Stream" },
+  { route: "topology", label: "Topology" },
 ];
 
 // The menu bar shown on every page. Links only change the URL hash, so no page ever reloads.
