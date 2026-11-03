@@ -3,6 +3,7 @@ export type TelemetryValueType = "Float" | "Int" | "Bool";
 
 export interface SensorRegistration {
   deviceId: string;
+  macAddress: string;
   zone: string;
   category: SensorCategory;
   valueType: TelemetryValueType;
@@ -14,6 +15,7 @@ export interface SensorRegistration {
 
 export interface RegisterSensorInput {
   deviceId: string;
+  macAddress?: string;
   zone: string;
   category: SensorCategory;
   valueType: TelemetryValueType;
@@ -122,7 +124,124 @@ export interface InsightsResponse {
 }
 
 // The pages the main menu can open.
-export type Route = "home" | "ingestion" | "command";
+export type Route = "home" | "ingestion" | "command" | "topology";
+
+// Part 3: the mesh network, its traversals and spanning trees, and the AVL archive.
+
+export type MeshNodeKind = "Gateway" | "Repeater" | "Sensor";
+
+export interface MeshNode {
+  id: string;
+  mac: string;
+  zone: string;
+  kind: MeshNodeKind;
+  x: number;
+  y: number;
+  online: boolean;
+}
+
+export interface MeshLink {
+  from: string;
+  to: string;
+  cost: number;
+}
+
+export interface MeshPath {
+  fromId: string;
+  toId: string;
+  reachable: boolean;
+  hops: string[];
+  legs: MeshLink[];
+  totalCost: number;
+  method: string;
+}
+
+export interface MstResult {
+  algorithm: string;
+  edges: MeshLink[];
+  totalCost: number;
+  nodesSpanned: number;
+  spansWholeNetwork: boolean;
+  elapsedTicks: number;
+  queueOperations: number;
+}
+
+export interface MeshSnapshot {
+  gatewayId: string;
+  nodes: MeshNode[];
+  links: MeshLink[];
+  prim: MstResult;
+  kruskal: MstResult;
+  algorithmsAgree: boolean;
+}
+
+export interface TraversalResult {
+  algorithm: string;
+  startId: string;
+  order: string[];
+  reachable: string[];
+  unreachable: string[];
+  offline: string[];
+  edgesExamined: number;
+}
+
+export interface RouteReport {
+  node: MeshNode;
+  spanning: MeshPath;
+  cheapest: MeshPath;
+  spanningCostsMore: boolean;
+}
+
+export interface ArchiveStats {
+  deviceId: string;
+  archived: number;
+  height: number;
+  idealHeight: number;
+  rotations: number;
+  balanced: boolean;
+  oldest: string | null;
+  newest: string | null;
+}
+
+export interface RangeQueryReport {
+  deviceId: string;
+  from: string;
+  to: string;
+  matches: number;
+  archivedReadings: number;
+  treeHeight: number;
+  idealHeight: number;
+  rotations: number;
+  treeNodesVisited: number;
+  listItemsScanned: number;
+  treeTicks: number;
+  listTicks: number;
+  answersMatch: boolean;
+}
+
+export interface RangeQueryResponse {
+  report: RangeQueryReport;
+  count: number;
+  points: HistoryPoint[];
+}
+
+export interface BalanceProof {
+  deviceId: string;
+  sampled: number;
+  avlHeight: number;
+  unbalancedHeight: number;
+  avlComparisons: number;
+  unbalancedComparisons: number;
+  rotations: number;
+  timesDeeper: number;
+}
+
+export interface ArchiveResponse {
+  deviceId: string;
+  count: number;
+  stats: ArchiveStats;
+  points: HistoryPoint[];
+}
 
 // Mirrors the zones registered in the backend's DeviceNode tree
 // (Studio HQ -> these four). Keep in sync with SensorRegistry.BuildZoneTree().
