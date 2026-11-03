@@ -4,6 +4,7 @@ import App from "./App";
 import "./App.css";
 import "./styles/nav.css";
 import "./styles/commandStream.css";
+import "./styles/topology.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
