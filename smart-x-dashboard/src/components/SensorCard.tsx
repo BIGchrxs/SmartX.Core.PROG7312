@@ -1,6 +1,6 @@
 import { useEffect, useState, type ChangeEvent } from "react";
 import type { SensorRegistration } from "../types";
-import { formatAge, formatValue, getStatus, STATUS_LABEL } from "../status";
+import { formatAge, formatValue, getStatus, STATUS_LABEL, unitFor } from "../status";
 
 interface Props {
   sensor: SensorRegistration;
@@ -75,7 +75,12 @@ export default function SensorCard({ sensor, onSendTelemetry, onUpload }: Props)
       </div>
 
       <div className="sensor-reading">
-        <span className="sensor-reading-value">{formatValue(sensor.lastValue, sensor.valueType === "Bool")}</span>
+        <span className="sensor-reading-value">
+          {formatValue(sensor.lastValue, sensor.valueType === "Bool")}
+          {sensor.lastValue !== null && sensor.lastValue !== undefined && (
+            <span className="reading-unit">{unitFor(sensor.zone, sensor.category)}</span>
+          )}
+        </span>
         <div className="sensor-reading-meta">
           <span className={`status-label status-label--${status}`}>{STATUS_LABEL[status]}</span>
           <span className="sensor-reading-age">{formatAge(sensor.lastSeenAt)}</span>

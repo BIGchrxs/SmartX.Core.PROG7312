@@ -6,11 +6,12 @@ import { formatClock } from "../status";
 interface Props {
   deviceId: string | null;
   isBool: boolean;
+  unit: string;
 }
 
 const WIDTH = 960;
 const HEIGHT = 260;
-const PAD = { left: 56, right: 16, top: 16, bottom: 30 };
+const PAD = { left: 84, right: 16, top: 16, bottom: 30 };
 const REFRESH_MS = 3000;
 
 const DOT_COLOUR: Record<string, string> = {
@@ -30,7 +31,7 @@ function buildPath(coords: { x: number; y: number }[], step: boolean): string {
 //-----------//
 
 // One device's stored timeline, drawn from the API's sorted history. It refreshes every few seconds.
-export default function TimelineChart({ deviceId, isBool }: Props) {
+export default function TimelineChart({ deviceId, isBool, unit }: Props) {
   const [points, setPoints] = useState<HistoryPoint[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -91,7 +92,8 @@ export default function TimelineChart({ deviceId, isBool }: Props) {
   const yFor = (v: number) => PAD.top + plotH - ((v - vMin) / (vMax - vMin)) * plotH;
 
   const coords = points.map((p, i) => ({ x: xFor(times[i]), y: yFor(p.value) }));
-  const label = (v: number) => (isBool ? (v >= 1 ? "ON" : "OFF") : String(Math.round(v * 10) / 10));
+  const label = (v: number) =>
+    isBool ? (v >= 1 ? "ON" : "OFF") : `${Math.round(v * 10) / 10}${unit ? ` ${unit}` : ""}`;
 
   return (
     <figure className="chart">
