@@ -18,6 +18,20 @@ public class AlertTracker
     private readonly Dictionary<string, int> _incidents = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<AlertEvent> _events = new();
     private long _raisedTotal;
+    private long _duplicatesIgnored;
+
+    // How many times the set refused a repeat of an alert that was already active.
+    public long DuplicatesIgnored
+    {
+        get
+        {
+            lock (_lock)
+            {
+                return _duplicatesIgnored;
+            }
+        }
+    }
+    //-----------//
 
     // Total number of alerts ever raised, including ones that have recovered.
     public long RaisedTotal
@@ -43,7 +57,10 @@ public class AlertTracker
         lock (_lock)
         {
             if (!_active.Add(key))
+            {
+                _duplicatesIgnored++;
                 return false;
+            }
 
             var now = DateTime.UtcNow;
             _details[key] = new ActiveAlert(key, deviceId, type, message, now);

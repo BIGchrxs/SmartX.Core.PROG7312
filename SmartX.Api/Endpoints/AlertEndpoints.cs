@@ -16,11 +16,12 @@ public static class AlertEndpoints
         });
         //-----------//
 
-        // GET /alerts/events: the alert log with raised and recovered entries, newest first.
+        // GET /alerts/events: the alert log with raised and recovered entries, newest first,
+        // plus how many repeat alerts the set refused.
         app.MapGet("/alerts/events", (int? limit, AlertTracker alerts) =>
         {
             var events = alerts.Events(Math.Clamp(limit ?? 50, 1, 200));
-            return Results.Ok(new { raisedTotal = alerts.RaisedTotal, events });
+            return Results.Ok(new { raisedTotal = alerts.RaisedTotal, duplicatesIgnored = alerts.DuplicatesIgnored, events });
         });
         //-----------//
     }
