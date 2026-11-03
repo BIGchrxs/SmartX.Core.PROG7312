@@ -3,11 +3,14 @@ import type { Insight, SensorRegistration } from "../types";
 import { logSearch, sendCommand, undoCommand } from "../api";
 import { useSmartX } from "../context/SmartXContext";
 import { useSessionState } from "../hooks/useSessionState";
+import { unitFor } from "../status";
 import InsightsPanel from "./InsightsPanel";
 import AlertsList from "./AlertsList";
 import QueuePanel from "./QueuePanel";
 import CommandPanel from "./CommandPanel";
 import LiveFeed from "./LiveFeed";
+import AlertHistory from "./AlertHistory";
+import DeviceLookup from "./DeviceLookup";
 import TimelineChart from "./TimelineChart";
 
 const SEARCH_SETTLE_MS = 1000;
@@ -24,9 +27,11 @@ function matches(sensor: SensorRegistration, term: string): boolean {
 }
 //-----------//
 
-// The Part 2 page: insights, alerts, queues, manual overrides with undo, a live feed and device timelines.
+// The Part 2 page: insights, alerts, queues, manual overrides with undo, a live feed, alert history,
+// a device lookup and device timelines.
 export default function CommandStream() {
-  const { sensors, alerts, insights, commands, canUndo, queue, recent, error, refresh } = useSmartX();
+  const { sensors, alerts, alertEvents, raisedTotal, duplicatesIgnored, insights, commands, canUndo, queue, recent, error, refresh } =
+    useSmartX();
 
   // The search box and the chosen timeline device are kept per tab, so they survive page switches and refreshes.
   const [search, setSearch] = useSessionState("smartx.search", "");
@@ -64,6 +69,8 @@ export default function CommandStream() {
 
   // The timeline falls back to the first matching device when the saved choice is filtered out.
   const activeDevice = filtered.find((s) => s.deviceId === selected)?.deviceId ?? filtered[0]?.deviceId ?? null;
+  const activeSensor = sensors.find((s) => s.deviceId === activeDevice);
+  const activeUnit = activeSensor ? unitFor(activeSensor.zone, activeSensor.category) : "";
 
   // Runs a command-style action, then reloads everything so the panels agree.
   async function runAction(action: () => Promise<unknown>) {
@@ -147,7 +154,12 @@ export default function CommandStream() {
           onCommand={handleCommand}
           onUndo={handleUndo}
         />
-        <LiveFeed readings={visibleRecent} boolDevices={boolDevices} />
+        <LiveFeed readings={visibleRecent} sensors={sensors} />
+      </div>
+
+      <div className="stream-grid">
+        <AlertHistory events={alertEvents} raisedTotal={raisedTotal} duplicatesIgnored={duplicatesIgnored} />
+        <DeviceLookup />
       </div>
 
       <section className="panel panel--wide">
@@ -164,7 +176,7 @@ export default function CommandStream() {
             </select>
           </label>
         </div>
-        <TimelineChart deviceId={activeDevice} isBool={activeDevice !== null && boolDevices.has(activeDevice)} />
+        <TimelineChart deviceId={activeDevice} isBool={activeDevice !== null && boolDevices.has(activeDevice)} unit={activeUnit} />
       </section>
     </div>
   );

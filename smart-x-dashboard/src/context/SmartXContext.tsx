@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import type {
   ActiveAlert,
+  AlertEvent,
   CommandEntry,
   Insight,
   QueueStatus,
@@ -9,6 +10,7 @@ import type {
 } from "../types";
 import {
   getActiveAlerts,
+  getAlertEvents,
   getCommandHistory,
   getInsights,
   getQueueStatus,
@@ -23,6 +25,9 @@ const REFRESH_AFTER_SEND_MS = 350;
 interface SmartXValue {
   sensors: SensorRegistration[];
   alerts: ActiveAlert[];
+  alertEvents: AlertEvent[];
+  raisedTotal: number;
+  duplicatesIgnored: number;
   insights: Insight[];
   commands: CommandEntry[];
   canUndo: boolean;
@@ -46,6 +51,9 @@ function reasonText(reason: unknown): string {
 export function SmartXProvider({ children }: { children: ReactNode }) {
   const [sensors, setSensors] = useState<SensorRegistration[]>([]);
   const [alerts, setAlerts] = useState<ActiveAlert[]>([]);
+  const [alertEvents, setAlertEvents] = useState<AlertEvent[]>([]);
+  const [raisedTotal, setRaisedTotal] = useState(0);
+  const [duplicatesIgnored, setDuplicatesIgnored] = useState(0);
   const [insights, setInsights] = useState<Insight[]>([]);
   const [commands, setCommands] = useState<CommandEntry[]>([]);
   const [canUndo, setCanUndo] = useState(false);
@@ -56,13 +64,14 @@ export function SmartXProvider({ children }: { children: ReactNode }) {
 
   // Asks the API for everything at once. One failing call does not wipe the others.
   const refresh = useCallback(async () => {
-    const [s, a, i, c, q, r] = await Promise.allSettled([
+    const [s, a, i, c, q, r, e] = await Promise.allSettled([
       listSensors(),
       getActiveAlerts(),
       getInsights(),
       getCommandHistory(),
       getQueueStatus(),
       getRecent(25),
+      getAlertEvents(20),
     ]);
 
     let failure: string | null = null;
@@ -87,6 +96,12 @@ export function SmartXProvider({ children }: { children: ReactNode }) {
     if (r.status === "fulfilled") setRecent(r.value);
     else failure ??= reasonText(r.reason);
 
+    if (e.status === "fulfilled") {
+      setAlertEvents(e.value.events);
+      setRaisedTotal(e.value.raisedTotal);
+      setDuplicatesIgnored(e.value.duplicatesIgnored);
+    } else failure ??= reasonText(e.reason);
+
     setError(failure);
     setLoading(false);
   }, []);
@@ -101,8 +116,23 @@ export function SmartXProvider({ children }: { children: ReactNode }) {
   usePolling(refresh, POLL_INTERVAL_MS);
 
   const value = useMemo<SmartXValue>(
-    () => ({ sensors, alerts, insights, commands, canUndo, queue, recent, loading, error, refresh, refreshSoon }),
-    [sensors, alerts, insights, commands, canUndo, queue, recent, loading, error, refresh, refreshSoon]
+    () => ({
+      sensors,
+      alerts,
+      alertEvents,
+      raisedTotal,
+      duplicatesIgnored,
+      insights,
+      commands,
+      canUndo,
+      queue,
+      recent,
+      loading,
+      error,
+      refresh,
+      refreshSoon,
+    }),
+    [sensors, alerts, alertEvents, raisedTotal, duplicatesIgnored, insights, commands, canUndo, queue, recent, loading, error, refresh, refreshSoon]
   );
 
   return <SmartXContext.Provider value={value}>{children}</SmartXContext.Provider>;

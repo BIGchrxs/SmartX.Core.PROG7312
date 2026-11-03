@@ -38,6 +38,19 @@ export interface AlertsResponse {
   alerts: ActiveAlert[];
 }
 
+export interface AlertEvent {
+  timestamp: string;
+  key: string;
+  kind: "Raised" | "Recovered";
+  message: string;
+}
+
+export interface AlertEventsResponse {
+  raisedTotal: number;
+  duplicatesIgnored: number;
+  events: AlertEvent[];
+}
+
 export interface CommandEntry {
   id: number;
   deviceId: string;

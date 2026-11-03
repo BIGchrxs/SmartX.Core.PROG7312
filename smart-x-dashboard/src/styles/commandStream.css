@@ -347,6 +347,22 @@
   font-family: var(--font-mono);
 }
 
+/* A fixed-width unit column keeps the numbers lined up, even for ON/OFF rows with no unit. */
+.feed-unit {
+  display: inline-block;
+  min-width: 2.6em;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+/* The unit beside a sensor card's big number. */
+.reading-unit {
+  margin-left: 0.3em;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+
 /* ---------- Queue stats ---------- */
 
 .stat-grid {
@@ -377,6 +393,74 @@
 .stat-sub {
   font-size: 0.75rem;
   color: var(--text-muted);
+}
+
+/* ---------- Alert history ---------- */
+
+.history-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.history-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  font-size: 0.8rem;
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.history-text {
+  flex-basis: 100%;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.row-tag--raised {
+  color: #f0a49b;
+  border-color: var(--status-critical);
+}
+
+.row-tag--recovered {
+  color: var(--status-fresh);
+  border-color: var(--status-fresh);
+}
+
+/* ---------- Device lookup ---------- */
+
+.lookup-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0 0;
+}
+
+.lookup-grid > div {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px 12px;
+}
+
+.lookup-grid > .lookup-wide {
+  grid-column: 1 / -1;
+}
+
+.lookup-grid dt {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.lookup-grid dd {
+  margin: 4px 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
 }
 
 /* ---------- Timeline chart ---------- */

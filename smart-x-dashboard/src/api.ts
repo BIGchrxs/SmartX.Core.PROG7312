@@ -1,4 +1,5 @@
 import type {
+  AlertEventsResponse,
   AlertsResponse,
   CommandEntry,
   CommandHistoryResponse,
@@ -80,6 +81,23 @@ export async function uploadMedia(deviceId: string, file: File): Promise<void> {
 // The active alert set.
 export async function getActiveAlerts(): Promise<AlertsResponse> {
   const res = await fetch(`${BASE}/alerts/active`);
+  await unwrap(res);
+  return res.json();
+}
+//-----------//
+
+// The alert log (raised and recovered) with the count of repeats the set ignored.
+export async function getAlertEvents(limit = 20): Promise<AlertEventsResponse> {
+  const res = await fetch(`${BASE}/alerts/events?limit=${limit}`);
+  await unwrap(res);
+  return res.json();
+}
+//-----------//
+
+// One device by ID. The API finds it whatever the letter case. Returns null when it is not registered.
+export async function getSensor(deviceId: string): Promise<SensorRegistration | null> {
+  const res = await fetch(`${BASE}/sensors/${encodeURIComponent(deviceId)}`);
+  if (res.status === 404) return null;
   await unwrap(res);
   return res.json();
 }
