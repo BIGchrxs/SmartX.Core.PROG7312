@@ -1,0 +1,307 @@
+/* ---------- Mesh map ---------- */
+
+.mesh-map {
+  margin: 0;
+}
+
+.mesh-map svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.mesh-link {
+  stroke: var(--border-strong);
+  stroke-width: 0.3;
+  stroke-dasharray: 1.2 1.2;
+}
+
+.mesh-link--tree {
+  stroke: var(--accent);
+  stroke-width: 0.55;
+  stroke-dasharray: none;
+}
+
+.mesh-link--route {
+  stroke: var(--status-fresh);
+  stroke-width: 1.1;
+  stroke-dasharray: none;
+}
+
+.mesh-link--dead {
+  stroke: var(--status-critical);
+  stroke-width: 0.25;
+  stroke-dasharray: 0.6 1.6;
+  opacity: 0.5;
+}
+
+.mesh-cost {
+  fill: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 1.9px;
+}
+
+.mesh-node {
+  cursor: pointer;
+}
+
+.mesh-node:focus {
+  outline: none;
+}
+
+.mesh-node-dot {
+  fill: var(--surface-raised);
+  stroke: var(--border-strong);
+  stroke-width: 0.4;
+}
+
+.mesh-node--gateway .mesh-node-dot {
+  fill: var(--accent);
+  stroke: var(--accent-strong);
+}
+
+.mesh-node--repeater .mesh-node-dot {
+  fill: var(--surface-raised);
+  stroke: var(--accent);
+  stroke-width: 0.6;
+}
+
+.mesh-node--sensor .mesh-node-dot {
+  fill: var(--surface-raised);
+  stroke: var(--status-fresh);
+  stroke-width: 0.5;
+}
+
+.mesh-node--offline .mesh-node-dot {
+  fill: var(--surface);
+  stroke: var(--status-critical);
+  stroke-dasharray: 0.8 0.8;
+}
+
+.mesh-node--cut .mesh-node-dot {
+  stroke: var(--status-stale);
+  stroke-width: 0.8;
+}
+
+.mesh-node--selected .mesh-node-dot {
+  stroke: var(--status-fresh);
+  stroke-width: 1;
+}
+
+.mesh-node:hover .mesh-node-dot,
+.mesh-node:focus-visible .mesh-node-dot {
+  stroke: var(--status-fresh);
+  stroke-width: 0.9;
+}
+
+.mesh-node-label {
+  fill: var(--text);
+  font-family: var(--font-mono);
+  font-size: 2.1px;
+}
+
+.mesh-node--offline .mesh-node-label {
+  fill: var(--text-muted);
+}
+
+.mesh-node-down {
+  fill: var(--status-critical);
+  font-family: var(--font-mono);
+  font-size: 3.4px;
+  font-weight: 700;
+}
+
+.mesh-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 10px;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.mesh-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mesh-key::before {
+  content: "";
+  width: 14px;
+  height: 0;
+  border-top-width: 2px;
+  border-top-style: solid;
+}
+
+.mesh-key--tree::before {
+  border-color: var(--accent);
+}
+
+.mesh-key--route::before {
+  border-color: var(--status-fresh);
+  border-top-width: 3px;
+}
+
+.mesh-key--spare::before {
+  border-color: var(--border-strong);
+  border-top-style: dashed;
+}
+
+.mesh-key--offline::before,
+.mesh-key--cut::before {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--status-critical);
+}
+
+.mesh-key--cut::before {
+  border-color: var(--status-stale);
+}
+
+/* ---------- Hop chains ---------- */
+
+.hop-chain {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+}
+
+.hop {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 5px 9px;
+  font-size: 0.78rem;
+}
+
+.hop-name {
+  font-family: var(--font-mono);
+}
+
+.hop-cost,
+.hop-index {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--accent-strong);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+
+.hop-index {
+  color: var(--text-muted);
+  border-color: var(--border-strong);
+}
+
+.hop-chain--wrap {
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+/* ---------- Spanning tree comparison ---------- */
+
+.mst-compare {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.mst-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border-strong);
+  border-radius: 4px;
+  padding: 12px 14px;
+}
+
+.mst-card--agreed {
+  border-left-color: var(--status-fresh);
+}
+
+.mst-card--differs {
+  border-left-color: var(--status-critical);
+}
+
+.mst-card h3 {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.mst-total {
+  font-family: var(--font-mono);
+  font-size: 1.6rem;
+  margin: 6px 0 2px;
+}
+
+.mst-detail {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* ---------- Archive panel ---------- */
+
+.toolbar--archive {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.toolbar--archive .field input,
+.toolbar--archive .field select {
+  min-width: 190px;
+}
+
+.stat-grid--wide {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 800px) {
+  .mst-compare,
+  .stat-grid--wide {
+    grid-template-columns: 1fr;
+  }
+
+  .toolbar--archive .field input,
+  .toolbar--archive .field select {
+    min-width: 0;
+  }
+
+  .mesh-node-label,
+  .mesh-cost {
+    font-size: 2.6px;
+  }
+}
+
+/* The kept links read better in two columns once the panel is full width. */
+.history-list--columns {
+  max-height: none;
+  overflow: visible;
+}
+
+@media (min-width: 801px) {
+  .history-list--columns {
+    column-count: 2;
+    column-gap: 20px;
+  }
+
+  .history-list--columns .history-row {
+    break-inside: avoid;
+  }
+}
