@@ -198,6 +198,9 @@ These were found by testing rather than by marker feedback, and are listed for c
 | API error messages appeared in the interface wrapped in JSON quotes | The error body is sometimes a JSON string | `unwrap` in `api.ts` now parses a JSON string before displaying it |
 | Merge conflicts on `SmartX.Api.AssemblyInfo.cs` and similar | Generated `bin` and `obj` output had been committed | `.gitignore` covers `bin/`, `obj/`, `node_modules/`, `dist/` and `uploads/` |
 | Horizontal scrolling on a phone sized screen | A row of buttons could not wrap | `.row-actions` now wraps |
+| The mesh map left a large empty band above the graph and ran off the bottom of the screen | The drawing canvas was nearly square while the panel it sits in is wide | The canvas is now wide, and the nodes are laid out left to right by how far their zone sits from the gateway |
+| Node names overlapped the power cost printed on each link | Every label was drawn directly above its node, whatever was already there | Each label is placed on the side where its node has fewest links, worked out from the directions of the links themselves |
+| Every working node looked the same, whatever its readings said | The map coloured nodes by whether the mesh could reach them, and nothing else | Shape now carries the role, colour carries sensor health, and mesh failures are drawn as shapes so the two never collide |
 
 ---
 
@@ -213,7 +216,9 @@ These were found by testing rather than by marker feedback, and are listed for c
 | MAC addresses | Implemented properly, with an O(1) index and a lookup route |
 | Navigation | Third pillar enabled; navigation made asynchronous without losing state |
 | Units | Readings now display their unit everywhere |
-| Documentation | README extended with Part 3, data structure explanations and Tests 8 to 12 |
+| Topology readability | Mesh redrawn on a wide canvas so it fits on one screen, sensors coloured by health, live values on the map, labels placed clear of the links |
+| Packaging | Docker Compose added, so the API, dashboard and simulator start with one command |
+| Documentation | README extended with Part 3, data structure explanations, how to read the map, the Docker setup, and Tests 8 to 12 |
 
 ---
 

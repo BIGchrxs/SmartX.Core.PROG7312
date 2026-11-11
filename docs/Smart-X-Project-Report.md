@@ -59,7 +59,7 @@ real data and are visible in the interface:
 - **Balanced against unbalanced.** The same 2,000 readings are built into both an AVL tree and a
   plain binary search tree. The AVL tree is 11 levels deep; the plain tree is 2,000.
 
-Alongside this, 135 automated checks pass: 46 against the Part 3 API, 46 driving the Part 3 page in
+Alongside this, 136 automated checks pass: 46 against the Part 3 API, 47 driving the Part 3 page in
 a real browser, 29 covering Parts 1 and 2, and 14 covering the Part 2 panels.
 
 ---
