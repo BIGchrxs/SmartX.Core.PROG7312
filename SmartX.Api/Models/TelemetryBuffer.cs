@@ -10,8 +10,8 @@ public class TelemetryBuffer<T>
 
     /// <param name="zoneCapacities">
     /// One entry per zone: (zone name, batch capacity for that zone). Capacities can
-    /// differ between zones — e.g. the IT Closet reports more often than Material
-    /// Storage — which is exactly what makes this a jagged array rather than a
+    /// differ between zones, for example the IT Closet reports more often than Material
+    /// Storage, which is exactly what makes this a jagged array rather than a
     /// rectangular (multi-dimensional) one.
     /// </param>
     public TelemetryBuffer(params (string Zone, int Capacity)[] zoneCapacities)
@@ -24,7 +24,7 @@ public class TelemetryBuffer<T>
         _counts = new int[zoneCapacities.Length];
     }
 
-    /// <summary>Every packet flushed so far, across all zones — the optimised List<T>.</summary>
+    /// <summary>Every packet flushed so far, across all zones: the optimised List&lt;T&gt;.</summary>
     public IReadOnlyList<TelemetryPacket<T>> Flushed => _flushed;
 
     public void Add(TelemetryPacket<T> packet)

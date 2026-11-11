@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from "react";
 import type { Route } from "../types";
 
-const ROUTES: Route[] = ["home", "ingestion", "command"];
+const ROUTES: Route[] = ["home", "ingestion", "command", "topology"];
 
 // Reads the current page from the URL hash, for example "#/command" gives "command".
 function parseRoute(): Route {
