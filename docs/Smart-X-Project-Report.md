@@ -26,6 +26,8 @@ as one application with three pillars reached from a single menu.
 The backend is an ASP.NET Core Minimal API on .NET 10. The frontend is a React and TypeScript single
 page application. A Node script stands in for the ESP32 hardware and sends ordinary HTTP requests, so
 every structure is exercised the way it would be in the field rather than through a test harness.
+All three run together under Docker Compose, so the whole system starts with one command on any
+machine with Docker installed and no other toolchain at all.
 
 ### Data structures across the three parts
 
@@ -57,7 +59,7 @@ real data and are visible in the interface:
 - **Balanced against unbalanced.** The same 2,000 readings are built into both an AVL tree and a
   plain binary search tree. The AVL tree is 11 levels deep; the plain tree is 2,000.
 
-Alongside this, 135 automated checks pass: 46 against the Part 3 API, 46 driving the Part 3 page in
+Alongside this, 136 automated checks pass: 46 against the Part 3 API, 47 driving the Part 3 page in
 a real browser, 29 covering Parts 1 and 2, and 14 covering the Part 2 panels.
 
 ---
@@ -262,20 +264,32 @@ device without touching the others.
 supported client. The Device Provisioning Service matches the pattern Smart-X already uses, where a
 device announces itself and is enrolled.
 
-### 4.4 Docker Compose, then container orchestration
+### 4.4 Container orchestration, building on the Compose setup already in place
 
-**What:** a `Dockerfile` for the API, one for the dashboard, and a `docker-compose.yml` that starts
-both with the database from 4.2.
+**Already done.** Smart-X now ships a `Dockerfile` for the API, one for the dashboard and a
+`docker-compose.yml` that starts both along with the simulator. One `docker compose up --build`
+replaces three terminals and two toolchains, which removes every version difference between
+machines. Both images are multi stage: the API is compiled with the .NET SDK image and copied onto
+the smaller ASP.NET runtime image, and the dashboard is compiled with Node and copied onto nginx, so
+neither build toolchain ships to production. nginx also proxies the API, so the browser sees one
+origin and CORS drops out of the picture entirely.
 
-**Why.** Running the system currently takes three terminals and a correct SDK on the machine. One
-`docker compose up` removes every version difference between machines, which is the same class of
-problem as the clean clone test in 4.1: it proves the repository contains everything needed to run.
-Beyond that, container images are the unit that orchestration platforms schedule, so this is the step
-that makes horizontal scaling possible later.
+That work closed a real gap rather than a theoretical one. The clean clone test in 4.1 proves the
+repository holds every file; building from it in a container proves it holds every dependency too.
 
-**Fit with .NET.** Microsoft publishes official `dotnet/sdk` and `dotnet/aspnet` images, and the
-multi stage build pattern of compiling with the SDK image and shipping on the smaller runtime image
-is well established.
+**What comes next.** Compose runs the whole stack on one machine, which is the right size for one
+studio. The images it produces are also the unit that an orchestration platform schedules, so the
+next step is Azure Container Apps or Kubernetes: more than one API replica behind a load balancer,
+rolling updates with no downtime, and restarts handled by the platform rather than by the
+`restart: unless-stopped` policy Compose relies on.
+
+**What would have to change first.** Nothing in Smart-X can be replicated as it stands, because
+every structure in it lives in memory inside one process. Two API replicas would hold two separate
+ingestion queues, two undo stacks and two AVL archives, and an operator would get different answers
+depending on which replica served the request. Moving the archive to a time series database (4.2)
+and the live state to a shared cache would have to come first. Containerisation makes scaling
+possible; it does not make this application scalable on its own, and the honest order of work is
+state first, platform second.
 
 ### 4.5 OpenTelemetry with Prometheus and Grafana
 

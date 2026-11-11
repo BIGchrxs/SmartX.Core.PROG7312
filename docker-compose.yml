@@ -1,0 +1,52 @@
+# The whole Smart-X stack in one command: the API, the dashboard, and the simulator standing in
+# for the ESP32 hardware. Run it with:
+#
+#   docker compose up --build
+#
+# then open http://localhost:5173. The ports match the ones used when running without Docker,
+# so every address in the README works either way.
+
+services:
+  api:
+    build: ./SmartX.Api
+    container_name: smartx-api
+    ports:
+      - "5067:8080"
+    volumes:
+      # Media uploaded against a sensor survives a rebuild of the image.
+      - uploads:/app/uploads
+    restart: unless-stopped
+
+  dashboard:
+    build: ./smart-x-dashboard
+    container_name: smartx-dashboard
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  simulator:
+    image: node:22-alpine
+    container_name: smartx-simulator
+    working_dir: /simulator
+    volumes:
+      - ./simulator:/simulator:ro
+    environment:
+      # Inside the compose network the API answers to its service name.
+      API: http://api:8080
+      CYCLE_MS: "2000"
+    # The API takes a moment to start listening, so the simulator waits for it rather than
+    # failing on the first request and leaving the dashboard with nothing to show.
+    command: >
+      sh -c "until wget -q -O - http://api:8080/sensors > /dev/null 2>&1; do
+               echo 'Waiting for the API to start';
+               sleep 2;
+             done;
+             node simulate.mjs normal"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  uploads:

@@ -18,7 +18,7 @@ All three pillars are live and run inside one application.
 4. [Setup and running](#setup-and-running)
 5. [Using the app](#using-the-app)
 6. [How Part 2 works](#how-part-2-works)
-7. [How Part 3 works](#how-part-3-works)
+7. [How Part 3 works](#how-part-3-works) (including [reading the map](#reading-the-map))
 8. [Data structure explanations](#data-structure-explanations)
 9. [Testing guide](#testing-guide)
 10. [API reference](#api-reference)
@@ -39,6 +39,7 @@ All three pillars are live and run inside one application.
 | `SmartX.Api/` | The backend: an ASP.NET Core Minimal API with the queues, stack, dictionaries, sets, suggestion engine, mesh graph and AVL archive. |
 | `smart-x-dashboard/` | The frontend: a React and TypeScript single page app. |
 | `simulator/` | A Node script that behaves like physical devices and sends plain HTTP requests to the API. |
+| `docker-compose.yml` | Starts the API, the dashboard and the simulator together with one command. |
 | `docs/` | The written submissions: the project completion report with technology recommendations, and the ledger of updates made in response to marker feedback. Both are provided as Markdown and as PDF. |
 
 Inside `SmartX.Api/`:
@@ -94,6 +95,14 @@ The frontend and the API are separate processes that must both be running. Nothi
 
 ## Prerequisites
 
+There are two ways to run Smart-X. Either is enough on its own.
+
+**With Docker**, nothing else is needed:
+
+- **Docker Desktop**, or Docker Engine with the Compose plugin
+
+**Without Docker**, install the toolchains directly:
+
 - **.NET 10 SDK**
 - **Node.js 18 or newer** and npm (the simulator uses the built in `fetch`)
 
@@ -101,7 +110,8 @@ The frontend and the API are separate processes that must both be running. Nothi
 
 ## Setup and running
 
-Open three terminals.
+The quickest way is [Docker](#docker), which starts everything with one command. To run the
+toolchains directly instead, open three terminals and follow the steps below.
 
 ### 1. Backend API
 
@@ -146,7 +156,7 @@ dotnet run
 2. Use the **menu bar** at the top to move between **Main menu**, **Ingestion**, **Command Stream** and **Topology**. A red badge on Command Stream shows the number of active alerts, and a light on the right shows whether the API is reachable.
 3. **Ingestion** (Part 1): register a sensor, send a reading by hand and attach a file to a sensor.
 4. **Command Stream** (Part 2): see automated insights, active alerts, the ingestion queues, manual overrides with the undo stack, a live feed (with units), an alert history, a device lookup and a device timeline.
-5. **Topology** (Part 3): see the mesh drawn as a graph, trace how any node's telemetry reaches the gateway, power a node down and watch the mesh heal, compare the two spanning tree algorithms, and run range queries against the AVL archive.
+5. **Topology** (Part 3): see the mesh drawn as a graph with every sensor coloured by its health, trace how any node's telemetry reaches the gateway, power a node down and watch the mesh heal, compare the two spanning tree algorithms, and run range queries against the AVL archive. [Reading the map](#reading-the-map) explains what the colours and shapes mean.
 
 ### State is kept when you navigate
 
@@ -220,6 +230,48 @@ linked to the nearest anchor in its own zone.
 Every node carries a hardware address in Espressif's registered block (`24:6F:28:...`), which is the
 block real ESP32 chips are issued from. A device that does not bring its own address is given one
 derived from its device ID, so it is the same every time the gateway starts.
+
+### Reading the map
+
+The map uses three separate channels so that no colour has to mean two things at once.
+
+**Shape says what a node is for.** A rounded square is the gateway, a diamond is a repeater, and a
+circle is a sensor. Gateways and repeaters are drawn in neutral grey, because they carry traffic
+rather than take readings. That leaves green, amber and red free to mean one thing only: how a
+sensor is doing.
+
+**Colour says how healthy a sensor is.**
+
+| On the map | Meaning |
+| --- | --- |
+| Green ring | Reporting normally |
+| Amber ring | Latest reading is at or above the warning limit |
+| Amber dashed ring | Has not reported for 15 seconds |
+| Red ring, pulsing | Latest reading is at or above the critical limit |
+| Red dashed ring | Has not reported for 45 seconds |
+| Dark grey ring | Registered but has never sent a reading |
+| Filled centre | An actuator that is switched on |
+
+Each sensor's latest value and unit sit under its name, in the same colour, so the map answers
+"how is everything doing" as well as "how is it all wired together".
+
+**Line style says what part a link plays in routing.**
+
+| On the map | Meaning |
+| --- | --- |
+| Thick orange | The route taken by the node you selected |
+| Solid grey | A link the minimum spanning tree keeps |
+| Faint dashed | A spare link, available if something fails |
+| Red dotted | A link that is down because a node at one end has no power |
+
+The number on each line is that hop's power cost, so the spanning tree total can be checked by hand.
+
+**Trouble in the mesh is drawn as shape, never as colour.** A cross through a node means it has been
+powered down. A dashed outline on an otherwise healthy node means it is cut off: it still has power,
+but every path back to the gateway runs through something that does not. Keeping these as shapes is
+what stops a failed radio from looking like an overheating server rack.
+
+---
 
 ### Why two spanning tree algorithms
 
@@ -827,7 +879,70 @@ Run with `node simulator/simulate.mjs <scenario>` from the repository root. Sett
 
 ## Docker
 
-Docker is not used. The API and the dashboard run directly with `dotnet run` and `npm run dev` as described above.
+The whole stack runs with one command. From the repository root:
+
+```powershell
+docker compose up --build
+```
+
+Then open <http://localhost:5173>. The first build takes a few minutes while the base images are
+pulled; after that it starts in seconds. Press `Ctrl+C` to stop, or:
+
+```powershell
+docker compose down
+```
+
+### What it starts
+
+| Service | Image | Port on your machine | What it does |
+| --- | --- | --- | --- |
+| `api` | Built from `SmartX.Api/Dockerfile` | `5067` | The ASP.NET Core API |
+| `dashboard` | Built from `smart-x-dashboard/Dockerfile` | `5173` | The built React app, served by nginx |
+| `simulator` | `node:22-alpine` | none | Sends telemetry to the API, standing in for the ESP32 hardware |
+
+The ports are the same ones used when running without Docker, so every address in this README works
+either way, including the PowerShell commands in the testing guide.
+
+### How it is put together
+
+Both images are **multi stage builds**. The API is compiled with the .NET SDK image and then copied
+onto the much smaller ASP.NET runtime image, so the SDK and the source never ship. The dashboard is
+compiled with Node and then copied onto nginx, so Node never ships either. In both cases what runs
+is only the built application.
+
+**nginx serves the dashboard and proxies the API.** The dashboard calls `/api/...`, and nginx
+forwards those to the `api` container, stripping the prefix exactly as the Vite dev proxy does. The
+browser only ever talks to one origin, so no CORS headers are involved.
+
+**The simulator waits for the API** before it starts sending, rather than failing on its first
+request and leaving the dashboard empty.
+
+**Uploaded media is kept in a named volume**, so files attached to a sensor survive a rebuild.
+
+### Running a scenario
+
+The simulator runs the `normal` scenario by default. To run one of the others against the same
+stack, leave it running and start a second simulator alongside it:
+
+```powershell
+docker compose run --rm simulator node simulate.mjs power-spike
+```
+
+Replace `power-spike` with any scenario from the [simulator scenarios](#simulator-scenarios) table.
+For tests that need the normal stream stopped first, such as the alert tests, stop it with:
+
+```powershell
+docker compose stop simulator
+```
+
+### Rebuilding after a code change
+
+```powershell
+docker compose up --build
+```
+
+Docker caches each step, so a change to the C# or the React code does not repeat the dependency
+restore. Only a change to `SmartX.Api.csproj` or `package.json` does.
 
 ---
 
