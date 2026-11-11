@@ -55,7 +55,7 @@ function problemText(error: unknown, fallback: string): string {
 // The Part 3 page: the mesh as a graph, how it is walked, the spanning tree that keeps it cheap to
 // run, and the AVL archive behind the historical log.
 export default function Topology() {
-  const { sensors } = useSmartX();
+  const { sensors, alerts } = useSmartX();
 
   const [mesh, setMesh] = useState<MeshSnapshot | null>(null);
   const [traversal, setTraversal] = useState<TraversalResult | null>(null);
@@ -248,15 +248,52 @@ export default function Topology() {
   const routeLegs = useMemo(() => route?.spanning.legs ?? [], [route]);
   const liveNodes = mesh?.nodes.filter((n) => n.online).length ?? 0;
 
+  /*
+    The headline in plain words. A count of nodes tells an operator nothing on its own, so this
+    leads with what is wrong and names the nodes involved, and says so plainly when nothing is.
+  */
+  const headline = useMemo(() => {
+    if (!mesh) return "Loading the mesh.";
+
+    const down = mesh.nodes.filter((n) => !n.online).map((n) => n.id);
+    const stranded = traversal?.unreachable ?? [];
+    const problems: string[] = [];
+
+    if (down.length > 0) {
+      problems.push(`${down.join(" and ")} ${down.length === 1 ? "has" : "have"} lost power`);
+    }
+
+    if (stranded.length > 0) {
+      problems.push(`${stranded.join(" and ")} cannot reach the gateway`);
+    }
+
+    if (alerts.length > 0) {
+      const names = Array.from(new Set(alerts.map((a) => a.deviceId)));
+      problems.push(`${names.join(" and ")} ${names.length === 1 ? "has" : "have"} an open alert`);
+    }
+
+    if (problems.length === 0) {
+      return `All ${mesh.nodes.length} nodes are online and every one can reach the gateway.`;
+    }
+
+    const sentence = problems.join(". ");
+    return `${sentence.charAt(0).toUpperCase()}${sentence.slice(1)}.`;
+  }, [mesh, traversal, alerts]);
+  //-----------//
+
   return (
     <div className="dashboard">
       <header className="dashboard-header">
         <h1>Network Topology &amp; Mesh Routing</h1>
-        <p>
-          {mesh
-            ? `${mesh.nodes.length} mesh node${mesh.nodes.length === 1 ? "" : "s"}, ${liveNodes} online, ${mesh.links.length} wireless links, spanning tree cost ${mesh.prim.totalCost}`
-            : "Loading the mesh."}
+        <p className={mesh && (traversal?.unreachable.length ?? 0) + mesh.nodes.filter((n) => !n.online).length > 0 ? "summary-hot" : ""}>
+          {headline}
         </p>
+        {mesh && (
+          <p className="dashboard-subline">
+            {liveNodes} of {mesh.nodes.length} nodes online, {mesh.links.length} wireless links, spanning tree cost{" "}
+            {mesh.prim.totalCost}
+          </p>
+        )}
       </header>
 
       {meshProblem && <div className="banner banner--error">{meshProblem}</div>}
@@ -272,6 +309,8 @@ export default function Topology() {
             </div>
             <MeshMap
               mesh={mesh}
+              sensors={sensors}
+              alerts={alerts}
               selectedId={route?.node.id ?? null}
               routeLegs={routeLegs}
               unreachable={traversal?.unreachable ?? []}
