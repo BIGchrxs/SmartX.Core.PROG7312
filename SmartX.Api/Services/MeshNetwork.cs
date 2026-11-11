@@ -31,15 +31,18 @@ public class MeshNetwork
     // Lays out the Studio HQ mesh: one gateway, two repeaters and the six sensors from Parts 1 and 2.
     private void BuildStudioHqMesh()
     {
-        AddNode(new MeshNode(GatewayId, "24:6F:28:00:00:01", "IT Closet", MeshNodeKind.Gateway, 50, 50, true));
-        AddNode(new MeshNode("RPT-HALL-01", "24:6F:28:B2:5C:01", "Hallway", MeshNodeKind.Repeater, 30, 38, true));
-        AddNode(new MeshNode("RPT-MEZZ-02", "24:6F:28:B2:5C:02", "Mezzanine", MeshNodeKind.Repeater, 68, 72, true));
-        AddNode(new MeshNode("ITC-TEMP-01", "24:6F:28:A1:4B:01", "IT Closet", MeshNodeKind.Sensor, 64, 28, true));
-        AddNode(new MeshNode("ITC-CRAC-01", "24:6F:28:A1:4B:02", "IT Closet", MeshNodeKind.Sensor, 44, 22, true));
-        AddNode(new MeshNode("MS-HUM-01", "24:6F:28:C3:6D:01", "Material Storage", MeshNodeKind.Sensor, 12, 24, true));
-        AddNode(new MeshNode("MS-DEHUM-01", "24:6F:28:C3:6D:02", "Material Storage", MeshNodeKind.Sensor, 14, 52, true));
-        AddNode(new MeshNode("SR-LUX-01", "24:6F:28:D4:7E:01", "Showroom Floor", MeshNodeKind.Sensor, 82, 88, true));
-        AddNode(new MeshNode("WS-PWR-01", "24:6F:28:E5:8F:01", "Workshop", MeshNodeKind.Sensor, 46, 86, true));
+        // Laid out left to right by how far a zone sits from the gateway: Material Storage, the hall
+        // repeater, the gateway and IT Closet, then the mezzanine repeater and the far zones. The
+        // canvas is wide rather than square so the whole mesh fits on screen without scrolling.
+        AddNode(new MeshNode(GatewayId, "24:6F:28:00:00:01", "IT Closet", MeshNodeKind.Gateway, 52, 18, true));
+        AddNode(new MeshNode("RPT-HALL-01", "24:6F:28:B2:5C:01", "Hallway", MeshNodeKind.Repeater, 26, 21, true));
+        AddNode(new MeshNode("RPT-MEZZ-02", "24:6F:28:B2:5C:02", "Mezzanine", MeshNodeKind.Repeater, 74, 28, true));
+        AddNode(new MeshNode("ITC-TEMP-01", "24:6F:28:A1:4B:01", "IT Closet", MeshNodeKind.Sensor, 65, 9, true));
+        AddNode(new MeshNode("ITC-CRAC-01", "24:6F:28:A1:4B:02", "IT Closet", MeshNodeKind.Sensor, 42, 9, true));
+        AddNode(new MeshNode("MS-HUM-01", "24:6F:28:C3:6D:01", "Material Storage", MeshNodeKind.Sensor, 9, 13, true));
+        AddNode(new MeshNode("MS-DEHUM-01", "24:6F:28:C3:6D:02", "Material Storage", MeshNodeKind.Sensor, 12, 38, true));
+        AddNode(new MeshNode("SR-LUX-01", "24:6F:28:D4:7E:01", "Showroom Floor", MeshNodeKind.Sensor, 92, 37, true));
+        AddNode(new MeshNode("WS-PWR-01", "24:6F:28:E5:8F:01", "Workshop", MeshNodeKind.Sensor, 54, 40, true));
 
         AddLink(GatewayId, "ITC-TEMP-01", 2);
         AddLink(GatewayId, "ITC-CRAC-01", 3);
@@ -107,15 +110,15 @@ public class MeshNetwork
                 .ThenBy(n => n.Kind == MeshNodeKind.Gateway ? 1 : 0)
                 .First();
 
-            // New sensors are placed just off their anchor, so the drawing stays readable.
-            var offset = (_nodes.Count % 5) * 6 - 12;
+            // New sensors are placed just below their anchor, fanned out so labels do not collide.
+            var offset = (_nodes.Count % 5) * 7 - 14;
             AddNode(new MeshNode(
                 deviceId,
                 mac,
                 zone,
                 MeshNodeKind.Sensor,
                 Math.Clamp(anchor.X + offset, 6, 94),
-                Math.Clamp(anchor.Y + 14, 6, 94),
+                Math.Clamp(anchor.Y + 12, 8, 44),
                 true));
 
             AddLink(anchor.Id, deviceId, 5);
