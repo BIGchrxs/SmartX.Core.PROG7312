@@ -39,6 +39,7 @@ All three pillars are live and run inside one application.
 | `SmartX.Api/` | The backend: an ASP.NET Core Minimal API with the queues, stack, dictionaries, sets, suggestion engine, mesh graph and AVL archive. |
 | `smart-x-dashboard/` | The frontend: a React and TypeScript single page app. |
 | `simulator/` | A Node script that behaves like physical devices and sends plain HTTP requests to the API. |
+| `docker-compose.yml` | Starts the API, the dashboard and the simulator together with one command. |
 | `docs/` | The written submissions: the project completion report with technology recommendations, and the ledger of updates made in response to marker feedback. Both are provided as Markdown and as PDF. |
 
 Inside `SmartX.Api/`:
@@ -94,6 +95,14 @@ The frontend and the API are separate processes that must both be running. Nothi
 
 ## Prerequisites
 
+There are two ways to run Smart-X. Either is enough on its own.
+
+**With Docker**, nothing else is needed:
+
+- **Docker Desktop**, or Docker Engine with the Compose plugin
+
+**Without Docker**, install the toolchains directly:
+
 - **.NET 10 SDK**
 - **Node.js 18 or newer** and npm (the simulator uses the built in `fetch`)
 
@@ -101,7 +110,8 @@ The frontend and the API are separate processes that must both be running. Nothi
 
 ## Setup and running
 
-Open three terminals.
+The quickest way is [Docker](#docker), which starts everything with one command. To run the
+toolchains directly instead, open three terminals and follow the steps below.
 
 ### 1. Backend API
 
@@ -827,7 +837,70 @@ Run with `node simulator/simulate.mjs <scenario>` from the repository root. Sett
 
 ## Docker
 
-Docker is not used. The API and the dashboard run directly with `dotnet run` and `npm run dev` as described above.
+The whole stack runs with one command. From the repository root:
+
+```powershell
+docker compose up --build
+```
+
+Then open <http://localhost:5173>. The first build takes a few minutes while the base images are
+pulled; after that it starts in seconds. Press `Ctrl+C` to stop, or:
+
+```powershell
+docker compose down
+```
+
+### What it starts
+
+| Service | Image | Port on your machine | What it does |
+| --- | --- | --- | --- |
+| `api` | Built from `SmartX.Api/Dockerfile` | `5067` | The ASP.NET Core API |
+| `dashboard` | Built from `smart-x-dashboard/Dockerfile` | `5173` | The built React app, served by nginx |
+| `simulator` | `node:22-alpine` | none | Sends telemetry to the API, standing in for the ESP32 hardware |
+
+The ports are the same ones used when running without Docker, so every address in this README works
+either way, including the PowerShell commands in the testing guide.
+
+### How it is put together
+
+Both images are **multi stage builds**. The API is compiled with the .NET SDK image and then copied
+onto the much smaller ASP.NET runtime image, so the SDK and the source never ship. The dashboard is
+compiled with Node and then copied onto nginx, so Node never ships either. In both cases what runs
+is only the built application.
+
+**nginx serves the dashboard and proxies the API.** The dashboard calls `/api/...`, and nginx
+forwards those to the `api` container, stripping the prefix exactly as the Vite dev proxy does. The
+browser only ever talks to one origin, so no CORS headers are involved.
+
+**The simulator waits for the API** before it starts sending, rather than failing on its first
+request and leaving the dashboard empty.
+
+**Uploaded media is kept in a named volume**, so files attached to a sensor survive a rebuild.
+
+### Running a scenario
+
+The simulator runs the `normal` scenario by default. To run one of the others against the same
+stack, leave it running and start a second simulator alongside it:
+
+```powershell
+docker compose run --rm simulator node simulate.mjs power-spike
+```
+
+Replace `power-spike` with any scenario from the [simulator scenarios](#simulator-scenarios) table.
+For tests that need the normal stream stopped first, such as the alert tests, stop it with:
+
+```powershell
+docker compose stop simulator
+```
+
+### Rebuilding after a code change
+
+```powershell
+docker compose up --build
+```
+
+Docker caches each step, so a change to the C# or the React code does not repeat the dependency
+restore. Only a change to `SmartX.Api.csproj` or `package.json` does.
 
 ---
 
