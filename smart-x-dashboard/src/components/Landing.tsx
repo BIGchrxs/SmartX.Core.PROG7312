@@ -1,6 +1,8 @@
 import type { Route } from "../types";
 import { hrefFor } from "../hooks/useHashRoute";
 import { useSmartX } from "../context/SmartXContext";
+import { useEffect, useState } from "react";
+import { getMesh } from "../api";
 
 interface Pillar {
   key: string;
@@ -30,15 +32,42 @@ const PILLARS: Pillar[] = [
   {
     key: "topology",
     title: "Network Topology & Mesh Routing",
-    description: "Visualise the mesh network and route telemetry across nodes.",
-    route: null,
-    statusText: "Arrives in a later phase",
+    description:
+      "The mesh as a live graph: who can still reach the gateway, the spanning tree that keeps the radios cheap to run, and a searchable archive of every reading.",
+    route: "topology",
+    statusText: "Available in Part 3",
   },
 ];
 
 // The main menu: a live summary strip and one card per pillar.
 export default function Landing() {
   const { sensors, alerts, commands, insights } = useSmartX();
+  const [meshOnline, setMeshOnline] = useState(0);
+  const [meshProblem, setMeshProblem] = useState(false);
+
+  // The menu reports the mesh too, so all three pillars are visible from one place.
+  useEffect(() => {
+    let dropped = false;
+
+    const read = () =>
+      getMesh()
+        .then((mesh) => {
+          if (dropped) return;
+          setMeshOnline(mesh.nodes.filter((n) => n.online).length);
+          setMeshProblem(mesh.nodes.some((n) => !n.online));
+        })
+        .catch(() => {
+          if (!dropped) setMeshProblem(true);
+        });
+
+    void read();
+    const timer = setInterval(read, 5000);
+
+    return () => {
+      dropped = true;
+      clearInterval(timer);
+    };
+  }, []);
 
   return (
     <div className="landing">
@@ -68,6 +97,10 @@ export default function Landing() {
         <div>
           <dt>Suggestions</dt>
           <dd>{insights.length}</dd>
+        </div>
+        <div>
+          <dt>Mesh nodes online</dt>
+          <dd className={meshProblem ? "summary-hot" : ""}>{meshOnline}</dd>
         </div>
       </dl>
 

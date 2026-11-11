@@ -1,0 +1,568 @@
+/* ---------- Mesh map ---------- */
+/*
+   Two separate visual languages run on this map, so neither has to do two jobs at once.
+   Node colour says whether a node is healthy, off, or stranded. Link colour says what part a
+   link plays in routing. Shape says what a node is for.
+*/
+
+.mesh-map {
+  margin: 0;
+}
+
+.mesh-map svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+/* ----- Links ----- */
+
+.mesh-link {
+  stroke-linecap: round;
+  fill: none;
+}
+
+/* A spare link exists but carries nothing today. It should read as available, not as noise. */
+.mesh-edge--spare .mesh-link {
+  stroke: #3f3f3f;
+  stroke-width: 0.28;
+  stroke-dasharray: 1 1.3;
+}
+
+/* The spanning tree is the structure the mesh actually runs on. */
+.mesh-edge--tree .mesh-link {
+  stroke: #8c8c8c;
+  stroke-width: 0.55;
+}
+
+/* The route you asked about is the loudest thing on the map. */
+.mesh-edge--route .mesh-link {
+  stroke: var(--accent-strong);
+  stroke-width: 1.15;
+}
+
+.mesh-edge--dead .mesh-link {
+  stroke: var(--status-critical);
+  stroke-width: 0.3;
+  stroke-dasharray: 0.5 1.4;
+  opacity: 0.55;
+}
+
+/* Costs sit on a chip of the canvas colour, so a number is never read against a crossing line. */
+.mesh-cost-chip {
+  fill: var(--surface);
+  stroke: none;
+}
+
+.mesh-cost {
+  fill: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 2px;
+}
+
+.mesh-edge--route .mesh-cost {
+  fill: var(--accent-strong);
+}
+
+.mesh-edge--route .mesh-cost-chip {
+  fill: var(--surface);
+  stroke: var(--accent-strong);
+  stroke-width: 0.15;
+}
+
+.mesh-edge--spare .mesh-cost {
+  fill: #6b6b6b;
+}
+
+.mesh-edge--dead .mesh-cost {
+  fill: var(--status-critical);
+  opacity: 0.7;
+}
+
+/* ----- Nodes ----- */
+/*
+   Infrastructure stays neutral and sensors carry the health colour, so green, amber and red on
+   this map always mean "a sensor's readings", never just "a thing that is working".
+*/
+
+.mesh-node {
+  cursor: pointer;
+}
+
+.mesh-node:focus {
+  outline: none;
+}
+
+.mesh-node-dot {
+  fill: none;
+  stroke: var(--border-strong);
+  stroke-width: 0.5;
+}
+
+/* Infrastructure: the gateway everything routes to, and the repeaters that carry traffic. */
+.mesh-node--repeater .mesh-node-dot {
+  stroke: var(--text-muted);
+  stroke-width: 0.6;
+}
+
+.mesh-node--gateway .mesh-node-dot {
+  fill: var(--accent);
+  stroke: var(--accent-strong);
+  stroke-width: 0.6;
+}
+
+/* Sensor health. */
+.mesh-node--normal .mesh-node-dot {
+  stroke: var(--status-fresh);
+}
+
+.mesh-node--warning .mesh-node-dot,
+.mesh-node--slow .mesh-node-dot {
+  stroke: var(--status-stale);
+}
+
+.mesh-node--slow .mesh-node-dot {
+  stroke-dasharray: 1.4 0.9;
+}
+
+.mesh-node--critical .mesh-node-dot,
+.mesh-node--silent .mesh-node-dot {
+  stroke: var(--status-critical);
+  stroke-width: 0.7;
+}
+
+.mesh-node--silent .mesh-node-dot {
+  stroke-dasharray: 1.4 0.9;
+}
+
+.mesh-node--unknown .mesh-node-dot {
+  stroke: var(--status-never);
+}
+
+/* An actuator that is switched on is filled, so ON and OFF read at a glance. */
+.mesh-node--switched-on .mesh-node-dot {
+  fill: currentColor;
+}
+
+.mesh-node--switched-on.mesh-node--normal {
+  color: color-mix(in srgb, var(--status-fresh) 55%, var(--surface));
+}
+
+.mesh-node--switched-on.mesh-node--warning,
+.mesh-node--switched-on.mesh-node--slow {
+  color: color-mix(in srgb, var(--status-stale) 55%, var(--surface));
+}
+
+.mesh-node--switched-on.mesh-node--critical,
+.mesh-node--switched-on.mesh-node--silent {
+  color: color-mix(in srgb, var(--status-critical) 55%, var(--surface));
+}
+
+.mesh-node--switched-on.mesh-node--unknown {
+  color: var(--status-never);
+}
+
+/* A pulse marks a critical sensor, so it is found without hunting across the map. */
+@keyframes mesh-alarm {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.mesh-node--critical .mesh-node-dot {
+  animation: mesh-alarm 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mesh-node--critical .mesh-node-dot {
+    animation: none;
+    stroke-width: 0.9;
+  }
+}
+
+/* Mesh trouble is drawn as shape, never as colour, so it never competes with health. */
+.mesh-node--offline .mesh-node-dot {
+  fill: var(--surface);
+  stroke: var(--status-critical);
+  stroke-width: 0.5;
+  stroke-dasharray: none;
+  animation: none;
+}
+
+.mesh-node--cut .mesh-node-dot {
+  stroke-dasharray: 2 1;
+}
+
+.mesh-node-cross line {
+  stroke: var(--status-critical);
+  stroke-width: 0.5;
+  stroke-linecap: round;
+}
+
+/* The ring marks the node whose route is drawn, without recolouring its health. */
+.mesh-node-halo {
+  fill: none;
+  stroke: var(--accent-strong);
+  stroke-width: 0.35;
+  opacity: 0.85;
+}
+
+.mesh-node:hover .mesh-node-dot,
+.mesh-node:focus-visible .mesh-node-dot {
+  stroke: var(--text);
+  stroke-width: 0.8;
+}
+
+/* ----- Labels ----- */
+
+.mesh-label {
+  cursor: pointer;
+}
+
+.mesh-node-label {
+  fill: var(--text);
+  font-family: var(--font-mono);
+  font-size: 2.1px;
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 0.9;
+  stroke-linejoin: round;
+}
+
+.mesh-node-value {
+  fill: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 1.95px;
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 0.9;
+  stroke-linejoin: round;
+}
+
+.mesh-label--normal .mesh-node-value {
+  fill: var(--status-fresh);
+}
+
+.mesh-label--warning .mesh-node-value,
+.mesh-label--slow .mesh-node-value {
+  fill: var(--status-stale);
+}
+
+.mesh-label--critical .mesh-node-value,
+.mesh-label--silent .mesh-node-value {
+  fill: var(--status-critical);
+}
+
+.mesh-label--offline .mesh-node-label,
+.mesh-label--offline .mesh-node-value {
+  fill: var(--text-muted);
+}
+
+/* ----- Legend and detail strip ----- */
+
+.mesh-caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px 20px;
+  margin-top: 12px;
+}
+
+.mesh-legend-set {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mesh-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 13px;
+  font-size: 0.71rem;
+  color: var(--text-muted);
+}
+
+.mesh-legend-title {
+  color: var(--text);
+  font-size: 0.68rem;
+  min-width: 82px;
+}
+
+.mesh-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.mesh-key::before {
+  content: "";
+  width: 14px;
+  height: 0;
+  border-top-width: 2px;
+  border-top-style: solid;
+}
+
+/* Link keys mirror the strokes on the map. */
+.mesh-key--route::before {
+  border-color: var(--accent-strong);
+  border-top-width: 3px;
+}
+
+.mesh-key--tree::before {
+  border-color: #8c8c8c;
+}
+
+.mesh-key--spare::before {
+  border-color: #3f3f3f;
+  border-top-style: dashed;
+}
+
+/* Shape keys mirror the shapes, so the legend teaches the drawing. */
+.mesh-key--gateway::before,
+.mesh-key--repeater::before,
+.mesh-key--normal::before,
+.mesh-key--warning::before,
+.mesh-key--critical::before,
+.mesh-key--silent::before,
+.mesh-key--unknown::before,
+.mesh-key--on::before {
+  width: 9px;
+  height: 9px;
+  border: 1.6px solid var(--border-strong);
+  border-top-width: 1.6px;
+  border-radius: 50%;
+}
+
+.mesh-key--gateway::before {
+  background: var(--accent);
+  border-color: var(--accent-strong);
+  border-radius: 2px;
+}
+
+.mesh-key--repeater::before {
+  border-color: var(--text-muted);
+  border-radius: 0;
+  transform: rotate(45deg);
+}
+
+.mesh-key--normal::before {
+  border-color: var(--status-fresh);
+}
+
+.mesh-key--warning::before {
+  border-color: var(--status-stale);
+}
+
+.mesh-key--critical::before {
+  border-color: var(--status-critical);
+}
+
+.mesh-key--silent::before {
+  border-color: var(--status-critical);
+  border-style: dashed;
+}
+
+.mesh-key--unknown::before {
+  border-color: var(--status-never);
+}
+
+.mesh-key--on::before {
+  border-color: var(--status-fresh);
+  background: color-mix(in srgb, var(--status-fresh) 55%, var(--surface));
+}
+
+.mesh-detail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin: 0;
+  min-height: 1.1rem;
+}
+
+.mesh-detail strong {
+  font-family: var(--font-mono);
+  color: var(--text);
+}
+
+.mesh-detail-mac {
+  font-family: var(--font-mono);
+}
+
+.mesh-detail-state--normal {
+  color: var(--status-fresh);
+}
+
+.mesh-detail-state--warning,
+.mesh-detail-state--slow {
+  color: var(--status-stale);
+}
+
+.mesh-detail-state--critical,
+.mesh-detail-state--silent {
+  color: var(--status-critical);
+}
+
+.dashboard-subline {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  margin: 2px 0 0;
+}
+
+/* ---------- Hop chains ---------- */
+
+.hop-chain {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+}
+
+.hop {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 5px 9px;
+  font-size: 0.78rem;
+}
+
+.hop-name {
+  font-family: var(--font-mono);
+}
+
+.hop-cost,
+.hop-index {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--accent-strong);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+
+.hop-index {
+  color: var(--text-muted);
+  border-color: var(--border-strong);
+}
+
+.hop-chain--wrap {
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+/* ---------- Spanning tree comparison ---------- */
+
+.mst-compare {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.mst-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border-strong);
+  border-radius: 4px;
+  padding: 12px 14px;
+}
+
+.mst-card--agreed {
+  border-left-color: var(--status-fresh);
+}
+
+.mst-card--differs {
+  border-left-color: var(--status-critical);
+}
+
+.mst-card h3 {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.mst-total {
+  font-family: var(--font-mono);
+  font-size: 1.6rem;
+  margin: 6px 0 2px;
+}
+
+.mst-detail {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* ---------- Archive panel ---------- */
+
+.toolbar--archive {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.toolbar--archive .field input,
+.toolbar--archive .field select {
+  min-width: 190px;
+}
+
+.stat-grid--wide {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 800px) {
+  .mst-compare,
+  .stat-grid--wide {
+    grid-template-columns: 1fr;
+  }
+
+  .toolbar--archive .field input,
+  .toolbar--archive .field select {
+    min-width: 0;
+  }
+
+  .mesh-node-label,
+  .mesh-cost {
+    font-size: 2.5px;
+  }
+
+  .mesh-caption {
+    flex-direction: column;
+  }
+}
+
+/* The kept links read better in two columns once the panel is full width. */
+.history-list--columns {
+  max-height: none;
+  overflow: visible;
+}
+
+@media (min-width: 801px) {
+  .history-list--columns {
+    column-count: 2;
+    column-gap: 20px;
+  }
+
+  .history-list--columns .history-row {
+    break-inside: avoid;
+  }
+}

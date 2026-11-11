@@ -1,7 +1,7 @@
 // Shared freshness helpers, used by the sensor cards and the Command Stream page.
 // The limits match SmartXConstants in the API.
 
-import type { SensorCategory } from "./types";
+import type { AlertType, SensorCategory } from "./types";
 
 export type Status = "fresh" | "stale" | "critical" | "never";
 
@@ -22,6 +22,37 @@ export function getStatus(lastSeenAt: string | null | undefined): Status {
   if (seconds < STALE_AFTER_SECONDS) return "fresh";
   if (seconds < CRITICAL_AFTER_SECONDS) return "stale";
   return "critical";
+}
+//-----------//
+
+/*
+  One verdict per sensor, combining what its readings say with whether it is still reporting.
+  The two are kept in one scale on purpose: an operator glancing at the map wants to know which
+  sensors need attention, not whether the reason is the environment or the radio.
+*/
+export type Health = "critical" | "silent" | "warning" | "slow" | "normal" | "unknown";
+
+export const HEALTH_LABEL: Record<Health, string> = {
+  critical: "Critical reading",
+  silent: "Not reporting",
+  warning: "Out of range",
+  slow: "Slow to report",
+  normal: "Healthy",
+  unknown: "No readings yet",
+};
+
+// Worst state first, so the most urgent reason is the one that shows.
+export function getHealth(lastSeenAt: string | null | undefined, alertTypes: AlertType[]): Health {
+  if (alertTypes.includes("Critical")) return "critical";
+
+  const reporting = getStatus(lastSeenAt);
+
+  if (alertTypes.includes("Disconnected") || reporting === "critical") return "silent";
+  if (alertTypes.includes("OutOfRange")) return "warning";
+  if (reporting === "stale") return "slow";
+  if (reporting === "never") return "unknown";
+
+  return "normal";
 }
 //-----------//
 

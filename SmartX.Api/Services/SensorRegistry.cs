@@ -6,11 +6,14 @@ namespace SmartX.Api.Services;
 /// In-memory registry of sensors and the Smart-X deployment hierarchy, plus the
 /// three typed jagged-array buffers that flush readings into List&lt;T&gt;. Registered
 /// as a singleton so every request shares the same state.
-/// Devices live in a case-insensitive Dictionary, so every lookup by ID is O(1).
+/// Devices live in a case-insensitive Dictionary, so every lookup by ID is O(1). A second
+/// dictionary maps hardware address to device ID, so a lookup by MAC address is O(1) as well and
+/// never has to scan the device list.
 /// </summary>
 public class SensorRegistry
 {
     private readonly Dictionary<string, SensorRegistration> _sensors = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, string> _byMac = new(StringComparer.OrdinalIgnoreCase);
     private readonly object _lock = new();
 
     public DeviceNode Root { get; }
@@ -61,12 +64,43 @@ public class SensorRegistry
     }
     //-----------//
 
-    // Adds a sensor. Returns false if the device ID is already registered.
+    // Adds a sensor and indexes its hardware address. Returns false if the device ID is already registered.
     public bool TryRegister(SensorRegistration sensor)
     {
         lock (_lock)
         {
-            return _sensors.TryAdd(sensor.DeviceId, sensor);
+            if (!_sensors.TryAdd(sensor.DeviceId, sensor))
+                return false;
+
+            if (!string.IsNullOrWhiteSpace(sensor.MacAddress))
+                _byMac[sensor.MacAddress] = sensor.DeviceId;
+
+            return true;
+        }
+    }
+    //-----------//
+
+    // True when a hardware address already belongs to a different device.
+    public bool MacInUse(string mac, string exceptDeviceId)
+    {
+        lock (_lock)
+        {
+            return _byMac.TryGetValue(mac, out var owner)
+                && !string.Equals(owner, exceptDeviceId, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+    //-----------//
+
+    // Looks a sensor up by its hardware address in constant time, through the MAC index.
+    public bool TryGetByMac(string mac, out SensorRegistration? sensor)
+    {
+        lock (_lock)
+        {
+            if (_byMac.TryGetValue(mac, out var deviceId))
+                return _sensors.TryGetValue(deviceId, out sensor);
+
+            sensor = null;
+            return false;
         }
     }
     //-----------//

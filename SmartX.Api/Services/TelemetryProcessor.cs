@@ -5,13 +5,14 @@ namespace SmartX.Api.Services;
 /// <summary>
 /// Background worker that drains the ingestion queues. It is woken by the queue's signal, so a
 /// critical reading is picked up immediately. For each reading it updates the sensor, the jagged
-/// buffers, the sorted history and the alert state.
+/// buffers, the sorted history, the AVL archive behind the Part 3 historical log, and the alert state.
 /// </summary>
 public class TelemetryProcessor : BackgroundService
 {
     private readonly IngestionQueue _queue;
     private readonly SensorRegistry _registry;
     private readonly TelemetryHistory _history;
+    private readonly TelemetryArchive _archive;
     private readonly AlertTracker _alerts;
     private readonly ILogger<TelemetryProcessor> _logger;
 
@@ -20,12 +21,14 @@ public class TelemetryProcessor : BackgroundService
         IngestionQueue queue,
         SensorRegistry registry,
         TelemetryHistory history,
+        TelemetryArchive archive,
         AlertTracker alerts,
         ILogger<TelemetryProcessor> logger)
     {
         _queue = queue;
         _registry = registry;
         _history = history;
+        _archive = archive;
         _alerts = alerts;
         _logger = logger;
     }
@@ -64,7 +67,7 @@ public class TelemetryProcessor : BackgroundService
     }
     //-----------//
 
-    // Applies one reading to the sensor, buffers, history and alerts.
+    // Applies one reading to the sensor, buffers, history, archive and alerts.
     private void Process(QueuedReading reading)
     {
         if (!_registry.TryGet(reading.DeviceId, out var sensor) || sensor is null)
@@ -75,6 +78,10 @@ public class TelemetryProcessor : BackgroundService
 
         AddToBuffer(reading);
         _history.Add(reading);
+
+        // The archive keeps the deep history the AVL tree answers range queries from.
+        _archive.Add(reading.DeviceId, new HistoryPoint(reading.Timestamp, reading.NumericValue, reading.Severity));
+
         UpdateAlerts(reading);
     }
     //-----------//

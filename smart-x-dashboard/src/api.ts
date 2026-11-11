@@ -1,6 +1,12 @@
 import type {
   AlertEventsResponse,
   AlertsResponse,
+  ArchiveResponse,
+  BalanceProof,
+  MeshSnapshot,
+  RangeQueryResponse,
+  RouteReport,
+  TraversalResult,
   CommandEntry,
   CommandHistoryResponse,
   HistoryResponse,
@@ -168,5 +174,74 @@ export async function seedHistory(): Promise<void> {
   const res = await fetch(`${BASE}/demo/seed-history`, { method: "POST" });
   if (res.status === 409) return; // already seeded, which is fine
   await unwrap(res);
+}
+//-----------//
+
+// ---------- Part 3 ----------
+
+// The whole mesh: nodes, links and both spanning trees.
+export async function getMesh(): Promise<MeshSnapshot> {
+  const res = await fetch(`${BASE}/mesh`);
+  await unwrap(res);
+  return res.json();
+}
+//-----------//
+
+// A breadth first or depth first walk out from one node.
+export async function getTraversal(start: string, algorithm: "bfs" | "dfs"): Promise<TraversalResult> {
+  const res = await fetch(`${BASE}/mesh/traversal?start=${encodeURIComponent(start)}&algorithm=${algorithm}`);
+  await unwrap(res);
+  return res.json();
+}
+//-----------//
+
+// The hops one node's telemetry takes to the gateway. Accepts a device ID or a MAC address.
+export async function getRoute(idOrMac: string): Promise<RouteReport> {
+  const res = await fetch(`${BASE}/mesh/route/${encodeURIComponent(idOrMac)}`);
+  await unwrap(res);
+  return res.json();
+}
+//-----------//
+
+// Powers a mesh node down or back up, so the network can be seen healing around a failure.
+export async function setNodePower(id: string, on: boolean): Promise<void> {
+  await sendJson("POST", `/mesh/nodes/${encodeURIComponent(id)}/power?on=${on}`);
+}
+//-----------//
+
+// Brings every powered down node back online.
+export async function resetMesh(): Promise<void> {
+  await sendJson("POST", "/mesh/reset");
+}
+//-----------//
+
+// The newest archived readings for a device, with the state of its AVL tree.
+export async function getArchive(deviceId: string, limit = 50): Promise<ArchiveResponse> {
+  const res = await fetch(`${BASE}/archive/${encodeURIComponent(deviceId)}?limit=${limit}`);
+  await unwrap(res);
+  return res.json();
+}
+//-----------//
+
+// A range query over the archive, with the cost of the tree walk next to a plain scan.
+export async function getArchiveRange(deviceId: string, from: string, to: string): Promise<RangeQueryResponse> {
+  const res = await fetch(`${BASE}/archive/${encodeURIComponent(deviceId)}/range?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+  await unwrap(res);
+  return res.json();
+}
+//-----------//
+
+// Fills the archive with back dated readings, so the tree can be shown working over a long history.
+export async function backfillArchive(readings = 4000): Promise<{ backfilled: number; devices: number; readings: number }> {
+  const res = await sendJson("POST", `/demo/backfill?readings=${readings}`);
+  return res.json();
+}
+//-----------//
+
+// The same readings in a balanced and an unbalanced tree, which is why the archive uses AVL.
+export async function getBalanceProof(deviceId: string, sample = 2000): Promise<BalanceProof> {
+  const res = await fetch(`${BASE}/archive/${encodeURIComponent(deviceId)}/balance-proof?sample=${sample}`);
+  await unwrap(res);
+  return res.json();
 }
 //-----------//
