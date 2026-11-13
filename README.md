@@ -8,7 +8,7 @@ Smart-X is a hybrid IoT gateway for **Studio HQ**, an interior design and archit
 
 All three pillars are live and run inside one application.
 
-> Demo video: ADD YOUR YOUTUBE LINK HERE BEFORE SUBMITTING
+VIDEO LINK: https://youtu.be/GtLOPbRd_fo
 
 ## Contents
 
